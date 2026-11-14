@@ -116,6 +116,7 @@
     const valMoving = document.getElementById('valMoving');
     const valFps = document.getElementById('valFps');
     const valTorch = document.getElementById('valTorch');
+    const valExposureLocked = document.getElementById('valExposureLocked');
     const valTimeSource = document.getElementById('valTimeSource');
     const valSamples = document.getElementById('valSamples');
     const responseBox = document.getElementById('responseBox');
@@ -164,6 +165,7 @@
       if (!currentSession) return;
       const data = currentSession.getCollectedData();
       valTorch.textContent = String(data.torch);
+      valExposureLocked.textContent = String(data.exposureLocked);
       valTimeSource.textContent = data.timeSource || '-';
       valSamples.textContent = String(data.t.length);
     }
