@@ -43,7 +43,7 @@
       text-align: left;
     }
     th {
-      width: 38%;
+      width: 42%;
       background: #f5f5f5;
     }
     canvas#waveCanvas {
@@ -73,11 +73,28 @@
     </label>
   </div>
 
+  <div class="option-row">
+    <label>
+      목업 서버 응답 (npx vite 목업일 때만):
+      <select id="mockModeSel">
+        <option value="">정상 (201)</option>
+        <option value="retry">재측정 판정 (201, RETRY)</option>
+        <option value="drop-once">응답 끊김 1회 (서버엔 저장)</option>
+        <option value="csrf-once">CSRF 토큰 만료 1회</option>
+        <option value="400">400 잘못된 데이터</option>
+        <option value="401">401 로그인 필요</option>
+        <option value="403">403 동의 필요</option>
+        <option value="500">500 서버 오류</option>
+      </select>
+    </label>
+  </div>
+
   <div class="controls">
     <button id="btnStart">측정 시작</button>
     <button id="btnStop" disabled>중단</button>
     <button id="btnRetry" disabled>재전송 (retryUpload)</button>
     <button id="btnDownload" disabled>측정 데이터 JSON 다운로드</button>
+    <button id="btnSampleUpload">샘플 데이터로 전송 테스트</button>
   </div>
 
   <table>
@@ -89,8 +106,10 @@
       <tr><th>흔들림 여부 (moving)</th><td id="valMoving">-</td></tr>
       <tr><th>실제 FPS</th><td id="valFps">0</td></tr>
       <tr><th>플래시 상태 (torch)</th><td id="valTorch">-</td></tr>
+      <tr><th>노출/초점 고정 (exposureLocked)</th><td id="valExposureLocked">-</td></tr>
       <tr><th>촬영 시각 출처 (timeSource)</th><td id="valTimeSource">-</td></tr>
       <tr><th>수집 샘플 수</th><td id="valSamples">0</td></tr>
+      <tr><th>재전송 키 (Idempotency-Key)</th><td id="valIdemKey">-</td></tr>
     </tbody>
   </table>
 
@@ -107,7 +126,10 @@
     const btnStop = document.getElementById('btnStop');
     const btnRetry = document.getElementById('btnRetry');
     const btnDownload = document.getElementById('btnDownload');
+    const btnSampleUpload = document.getElementById('btnSampleUpload');
     const skipUploadChk = document.getElementById('skipUploadChk');
+    const mockModeSel = document.getElementById('mockModeSel');
+    const valIdemKey = document.getElementById('valIdemKey');
 
     const valState = document.getElementById('valState');
     const valDetail = document.getElementById('valDetail');
@@ -168,19 +190,35 @@
       valExposureLocked.textContent = String(data.exposureLocked);
       valTimeSource.textContent = data.timeSource || '-';
       valSamples.textContent = String(data.t.length);
+      valIdemKey.textContent = currentSession.getIdempotencyKey() || '-';
     }
 
-    btnStart.addEventListener('click', async () => {
+    // 전송 오류별 안내 (1-5)
+    const UPLOAD_ERROR_GUIDE = {
+      [HRV_ERRORS.UPLOAD_FAILED]: '재전송 가능',
+      [HRV_ERRORS.INVALID_DATA]: '재전송 불가, 다시 측정',
+      [HRV_ERRORS.AUTH_REQUIRED]: '로그인(또는 동의) 화면으로',
+    };
+
+    function endpointForMock() {
+      const mode = mockModeSel.value;
+      return mode ? `/api/hrv/measurements?mockStatus=${encodeURIComponent(mode)}` : '/api/hrv/measurements';
+    }
+
+    function resetDisplay() {
       waveHistory.length = 0;
       drawWave();
       responseBox.textContent = '{}';
       valDetail.textContent = '-';
       btnRetry.disabled = true;
       btnDownload.disabled = true;
+    }
 
-      currentSession = createHrvMeasurement({
+    function createSession() {
+      return createHrvMeasurement({
         skipUpload: skipUploadChk.checked,
-        onStateChange: (state, payload) => {
+        endpoint: endpointForMock(),
+        onStateChange: (state, payload, detail) => {
           valState.textContent = state;
           updateMetaDisplay();
 
@@ -192,16 +230,24 @@
           ].includes(state);
 
           btnStart.disabled = isRunning || state === HRV_STATES.UPLOADING;
+          btnSampleUpload.disabled = isRunning || state === HRV_STATES.UPLOADING;
           btnStop.disabled = !isRunning;
+          if (state === HRV_STATES.UPLOADING) btnRetry.disabled = true;
 
           if (state === HRV_STATES.ERROR) {
-            valDetail.textContent = String(payload);
-            if (payload === HRV_ERRORS.UPLOAD_FAILED) {
-              btnRetry.disabled = false;
+            if (detail) {
+              // 전송 오류: 종류 + HTTP 상태 + 서버 code
+              const http = detail.status ? `HTTP ${detail.status}` : '네트워크 오류';
+              valDetail.textContent = `${payload} (${http}${detail.code ? ', ' + detail.code : ''}) → ${UPLOAD_ERROR_GUIDE[payload]}`;
+              btnRetry.disabled = !detail.retryable;
               btnDownload.disabled = false;
+              responseBox.textContent = JSON.stringify(detail, null, 2);
+            } else {
+              valDetail.textContent = String(payload);
             }
           } else if (state === HRV_STATES.DONE) {
-            valDetail.textContent = '완료';
+            const m = payload?.measurement;
+            valDetail.textContent = m?.retryRequired ? `완료 (재측정 필요: ${m.retryReason})` : '완료';
             btnDownload.disabled = false;
             responseBox.textContent = JSON.stringify(
               payload?.skippedUpload ? { message: '업로드 건너뜀 (로컬 수집 완료)' } : payload,
@@ -226,8 +272,30 @@
           valTime.textContent = `${(elapsedMs / 1000).toFixed(1)}s / ${(totalMs / 1000).toFixed(1)}s`;
         },
       });
+    }
 
+    btnStart.addEventListener('click', async () => {
+      resetDisplay();
+      currentSession = createSession();
       await currentSession.start();
+    });
+
+    // 70초 측정 없이 저장된 샘플(t·r·g)로 전송 경로만 확인 (1-5·1-6 테스트용)
+    function nowLocalISO() {
+      const d = new Date();
+      const pad = (n) => String(Math.floor(Math.abs(n))).padStart(2, '0');
+      const off = -d.getTimezoneOffset();
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}` +
+        `${off >= 0 ? '+' : '-'}${pad(off / 60)}:${pad(off % 60)}`;
+    }
+
+    btnSampleUpload.addEventListener('click', async () => {
+      resetDisplay();
+      const res = await fetch('./hrvmeasurement_261113T1810_wrist.json');
+      const sample = await res.json();
+      sample.startedAt = nowLocalISO(); // 백엔드는 시작 시각이 수신 시각과 5분 넘게 차이 나면 400
+      currentSession = createSession();
+      await currentSession.uploadTestPayload(sample);
     });
 
     btnStop.addEventListener('click', () => {
@@ -237,7 +305,11 @@
     btnRetry.addEventListener('click', async () => {
       if (!currentSession) return;
       btnRetry.disabled = true;
-      await currentSession.retryUpload();
+      try {
+        await currentSession.retryUpload();
+      } catch (err) {
+        valDetail.textContent = err.message;
+      }
     });
 
     btnDownload.addEventListener('click', () => {

@@ -17,8 +17,156 @@ export const HRV_ERRORS = {
   PERMISSION_DENIED: 'PERMISSION_DENIED',
   NO_CAMERA: 'NO_CAMERA',
   INSECURE_CONTEXT: 'INSECURE_CONTEXT',
-  UPLOAD_FAILED: 'UPLOAD_FAILED',
+  UPLOAD_FAILED: 'UPLOAD_FAILED', // 네트워크 오류·5xx: retryUpload()로 같은 데이터·같은 키 재전송
+  INVALID_DATA: 'INVALID_DATA',   // 400 등: 재전송 불가, 다시 측정
+  AUTH_REQUIRED: 'AUTH_REQUIRED', // 401·403: 로그인 화면으로 (상세 code로 동의 화면 등 분기)
 };
+
+// 백엔드 API 명세(docs/API.md) 0절·6절 기준
+const DEFAULT_ENDPOINT = '/api/hrv/measurements';
+const DEFAULT_CSRF_ENDPOINT = '/api/auth/csrf';
+const CSRF_COOKIE_NAME = 'XSRF-TOKEN';
+const CSRF_HEADER_NAME = 'X-XSRF-TOKEN';
+const CSRF_INVALID_CODE = 'CSRF_TOKEN_INVALID'; // 403 중 CSRF 토큰 만료
+
+/**
+ * 실패한 전송의 HTTP 상태를 오류 종류로 나눈다 (1-5).
+ * - 네트워크 오류(status 0), 5xx, 408·429 → UPLOAD_FAILED (재전송 가능)
+ * - 401, 403 → AUTH_REQUIRED
+ * - 그 밖의 4xx(400, 404, 409, 413, 422 등) → INVALID_DATA (재전송 불가, 다시 측정)
+ */
+export function classifyUploadFailure(status) {
+  if (!status || status >= 500 || status === 408 || status === 429) {
+    return HRV_ERRORS.UPLOAD_FAILED;
+  }
+  if (status === 401 || status === 403) {
+    return HRV_ERRORS.AUTH_REQUIRED;
+  }
+  return HRV_ERRORS.INVALID_DATA;
+}
+
+/**
+ * 재전송 키용 UUID v4. crypto.randomUUID가 없는 브라우저는 getRandomValues로 만든다.
+ */
+function generateUuid() {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+  const b = globalThis.crypto.getRandomValues(new Uint8Array(16));
+  b[6] = (b[6] & 0x0f) | 0x40;
+  b[8] = (b[8] & 0x3f) | 0x80;
+  const h = Array.from(b, (x) => x.toString(16).padStart(2, '0')).join('');
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20)}`;
+}
+
+function readCookie(name) {
+  if (typeof document === 'undefined' || !document.cookie) return null;
+  for (const part of document.cookie.split(';')) {
+    const eq = part.indexOf('=');
+    if (eq < 0) continue;
+    if (part.slice(0, eq).trim() === name) {
+      const value = part.slice(eq + 1).trim();
+      try {
+        return decodeURIComponent(value);
+      } catch (_) {
+        return value;
+      }
+    }
+  }
+  return null;
+}
+
+async function readErrorBody(response) {
+  try {
+    const body = await response.json();
+    return body && typeof body === 'object' ? body : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+/**
+ * 측정 데이터 1건을 서버로 보낸다 (1-5, 1-6).
+ * - Idempotency-Key: 호출한 쪽이 측정마다 만든 키를 그대로 보낸다 (재전송 때 같은 키).
+ * - CSRF: XSRF-TOKEN 쿠키 값을 X-XSRF-TOKEN 헤더로 보낸다. 쿠키가 없으면 GET /api/auth/csrf로 먼저 받는다.
+ *   403 CSRF_TOKEN_INVALID가 오면 토큰을 새로 받아 한 번만 다시 보낸다.
+ * - credentials: 명세상 프론트·백엔드가 같은 출처라 기본 'same-origin'.
+ *   도메인이 다르면 'include'로 바꾼다 (이때는 백엔드 쿠키를 document.cookie로 못 읽으므로 CSRF 방식도 백엔드와 다시 맞춰야 함).
+ * 반환: { ok: true, status, data } 또는 { ok: false, error, status, code, message }
+ */
+export async function sendMeasurement(payload, options = {}) {
+  const {
+    endpoint = DEFAULT_ENDPOINT,
+    idempotencyKey,
+    credentials = 'same-origin',
+    csrfEndpoint = DEFAULT_CSRF_ENDPOINT,
+    fetchImpl = (...args) => globalThis.fetch(...args),
+  } = options;
+
+  if (!idempotencyKey) {
+    throw new Error('idempotencyKey가 필요합니다.');
+  }
+
+  const body = JSON.stringify(payload);
+  let csrfRefreshed = false;
+
+  for (;;) {
+    let response;
+    try {
+      let token = csrfRefreshed ? null : readCookie(CSRF_COOKIE_NAME);
+      if (!token) {
+        await fetchImpl(csrfEndpoint, { method: 'GET', credentials });
+        token = readCookie(CSRF_COOKIE_NAME);
+      }
+
+      const headers = {
+        'Content-Type': 'application/json',
+        'Idempotency-Key': idempotencyKey,
+      };
+      if (token) headers[CSRF_HEADER_NAME] = token;
+
+      response = await fetchImpl(endpoint, { method: 'POST', credentials, headers, body });
+    } catch (err) {
+      return {
+        ok: false,
+        error: HRV_ERRORS.UPLOAD_FAILED,
+        status: 0,
+        code: 'NETWORK_ERROR',
+        message: err?.message ?? null,
+      };
+    }
+
+    if (response.ok) {
+      // 본문을 받다가 연결이 끊기거나 깨진 응답이면 결과를 모르는 상태 → 같은 키로 재전송하면 서버가 원래 결과를 돌려준다
+      let text;
+      try {
+        text = await response.text();
+      } catch (err) {
+        return { ok: false, error: HRV_ERRORS.UPLOAD_FAILED, status: 0, code: 'NETWORK_ERROR', message: err?.message ?? null };
+      }
+      if (!text) return { ok: true, status: response.status, data: null };
+      try {
+        return { ok: true, status: response.status, data: JSON.parse(text) };
+      } catch (_) {
+        return { ok: false, error: HRV_ERRORS.UPLOAD_FAILED, status: response.status, code: 'INVALID_RESPONSE', message: null };
+      }
+    }
+
+    const errBody = await readErrorBody(response);
+    if (response.status === 403 && errBody.code === CSRF_INVALID_CODE && !csrfRefreshed) {
+      csrfRefreshed = true; // 토큰 새로 받아 같은 키로 한 번 더
+      continue;
+    }
+
+    return {
+      ok: false,
+      error: classifyUploadFailure(response.status),
+      status: response.status,
+      code: errBody.code ?? null,
+      message: errBody.message ?? null,
+    };
+  }
+}
 
 const TOTAL_DURATION_MS = 70000;   // 총 70초 (준비 10초 + 측정 60초)
 const WARMUP_DURATION_MS = 10000;  // 준비 10초
@@ -89,7 +237,9 @@ export function createHrvMeasurement(options = {}) {
     onStateChange = () => {},
     onSignal = () => {},
     onProgress = () => {},
-    endpoint = '/api/hrv/measurements',
+    endpoint = DEFAULT_ENDPOINT,
+    csrfEndpoint = DEFAULT_CSRF_ENDPOINT,
+    credentials = 'same-origin', // 백엔드 도메인이 다르면 'include'
     skipUpload = false, // 백엔드 미준비 시 업로드 건너뛰고 즉시 완료 처리 옵션
   } = options;
 
@@ -120,16 +270,19 @@ export function createHrvMeasurement(options = {}) {
   let gArr = [];
   let lastPayload = null; // 서버 전송용
   let lastDownloadData = null; // 로컬 다운로드용 페이로드 (exposureLocked 포함)
+  let idempotencyKey = null; // 측정 1회마다 새로 만들고 재전송 때 재사용
+  let lastError = null; // { type, status, code, message, retryable }
 
   // 손가락 상태 및 1초 슬라이딩 윈도우 버퍼
   let fingerDetectStartTime = null;
   let fingerLostStartTime = null;
   let recentFrames = []; // { time, r, g, status }
 
-  function setState(nextState, payload = undefined) {
+  // detail: 전송 오류일 때 { type, status, code, message, retryable } (서버 code로 동의 화면 등 분기)
+  function setState(nextState, payload = undefined, detail = undefined) {
     if (currentState === nextState && nextState !== HRV_STATES.ERROR) return;
     currentState = nextState;
-    onStateChange(nextState, payload);
+    onStateChange(nextState, payload, detail);
   }
 
   async function requestWakeLock() {
@@ -424,7 +577,9 @@ export function createHrvMeasurement(options = {}) {
   async function completeMeasurement() {
     cleanupCamera();
 
+    // 서버 전송 본문 (API 명세 6절 CAMERA). exposureLocked는 백엔드 협의 전이라 보내지 않음
     lastPayload = {
+      source: 'CAMERA',
       startedAt: startedAtISO,
       torch: torchEnabled,
       timeSource: timeSource || 'performance',
@@ -432,6 +587,8 @@ export function createHrvMeasurement(options = {}) {
       r: rArr,
       g: gArr,
     };
+    idempotencyKey = generateUuid(); // 측정 1회마다 새 키
+    lastError = null;
 
     // 테스트 페이지 다운로드용 JSON 데이터 (exposureLocked 포함)
     lastDownloadData = {
@@ -444,31 +601,41 @@ export function createHrvMeasurement(options = {}) {
       return;
     }
 
-    await uploadData(lastPayload);
+    await uploadData();
   }
 
-  async function uploadData(payload) {
+  /**
+   * lastPayload를 idempotencyKey로 전송한다. 재전송도 같은 데이터·같은 키를 쓴다.
+   */
+  async function uploadData() {
+    const mySession = sessionSeq;
+    lastError = null;
     setState(HRV_STATES.UPLOADING);
-    try {
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      });
 
-      if (!response.ok) {
-        throw new Error(`HTTP_${response.status}`);
-      }
+    const result = await sendMeasurement(lastPayload, {
+      endpoint,
+      idempotencyKey,
+      credentials,
+      csrfEndpoint,
+    });
 
-      const data = await response.json();
-      setState(HRV_STATES.DONE, data);
-      return data;
-    } catch (err) {
-      setState(HRV_STATES.ERROR, HRV_ERRORS.UPLOAD_FAILED);
-      return null;
+    // 전송 중 새 측정을 시작했으면 이전 결과는 버린다
+    if (mySession !== sessionSeq) return null;
+
+    if (result.ok) {
+      setState(HRV_STATES.DONE, result.data);
+      return result.data;
     }
+
+    lastError = {
+      type: result.error,
+      status: result.status,
+      code: result.code,
+      message: result.message,
+      retryable: result.error === HRV_ERRORS.UPLOAD_FAILED,
+    };
+    setState(HRV_STATES.ERROR, result.error, lastError);
+    return null;
   }
 
   /**
@@ -499,6 +666,8 @@ export function createHrvMeasurement(options = {}) {
     exposureLocked = false;
     lastPayload = null;
     lastDownloadData = null;
+    idempotencyKey = null; // 재측정은 새 키
+    lastError = null;
 
     setState(HRV_STATES.PREPARING_CAMERA);
 
@@ -620,13 +789,53 @@ export function createHrvMeasurement(options = {}) {
   }
 
   /**
-   * 전송 실패 시 메모리에 유지된 동일 데이터로 재전송
+   * 전송 실패 시 메모리에 유지된 동일 데이터·동일 Idempotency-Key로 재전송
+   * (응답만 끊기고 서버에는 저장된 경우 서버가 원래 결과를 돌려줘 중복 저장되지 않음)
+   * UPLOAD_FAILED(네트워크 오류·5xx)일 때만 가능. INVALID_DATA·AUTH_REQUIRED는 다시 측정하거나 로그인해야 한다.
    */
   async function retryUpload() {
-    if (!lastPayload) {
+    if (!lastPayload || !idempotencyKey) {
       throw new Error('재전송할 수집 데이터가 없습니다.');
     }
-    return await uploadData(lastPayload);
+    if (currentState === HRV_STATES.UPLOADING) return null;
+    if (lastError && !lastError.retryable) {
+      throw new Error(`재전송할 수 없는 오류입니다 (${lastError.type}).`);
+    }
+    return await uploadData();
+  }
+
+  /**
+   * 테스트 전용: 저장해 둔 측정 JSON(t·r·g 등)을 실제 측정과 같은 경로로 전송한다.
+   * 70초 측정 없이 전송 오류 구분·재전송 키·CSRF 동작을 확인할 때 쓴다. 새 측정으로 보고 새 키를 만든다.
+   */
+  async function uploadTestPayload(data) {
+    if (isActive || currentState === HRV_STATES.PREPARING_CAMERA || currentState === HRV_STATES.UPLOADING) {
+      throw new Error('측정이나 전송이 진행 중일 때는 쓸 수 없습니다.');
+    }
+    sessionSeq += 1;
+    lastPayload = {
+      source: 'CAMERA',
+      startedAt: data.startedAt,
+      torch: data.torch,
+      timeSource: data.timeSource,
+      t: data.t,
+      r: data.r,
+      g: data.g,
+    };
+    lastDownloadData = { ...lastPayload, exposureLocked: data.exposureLocked ?? false };
+    idempotencyKey = generateUuid();
+    lastError = null;
+    return await uploadData();
+  }
+
+  /** 마지막 전송 오류 상세 { type, status, code, message, retryable } 또는 null */
+  function getLastError() {
+    return lastError;
+  }
+
+  /** 현재 측정의 Idempotency-Key (재전송 때 같은 값인지 확인용) */
+  function getIdempotencyKey() {
+    return idempotencyKey;
   }
 
   /**
@@ -650,5 +859,8 @@ export function createHrvMeasurement(options = {}) {
     stop,
     retryUpload,
     getCollectedData,
+    getLastError,
+    getIdempotencyKey,
+    uploadTestPayload,
   };
 }
