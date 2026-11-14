@@ -47,6 +47,43 @@ function round2(num) {
   return Math.round(num * 100) / 100;
 }
 
+/**
+ * 노출·화이트밸런스·초점 고정 (Android Chrome 등 지원 기기만 적용)
+ */
+async function lockCamera(track) {
+  if (!track) return false;
+  const caps = track.getCapabilities?.() ?? {};
+  const adv = {};
+  if (caps.exposureMode?.includes('manual')) adv.exposureMode = 'manual';
+  if (caps.whiteBalanceMode?.includes('manual')) adv.whiteBalanceMode = 'manual';
+  if (caps.focusMode?.includes('manual')) adv.focusMode = 'manual';
+  if (Object.keys(adv).length === 0) return false;
+  try {
+    await track.applyConstraints({ advanced: [adv] });
+    return true;
+  } catch (_) {
+    return false; // 실패해도 측정은 계속
+  }
+}
+
+/**
+ * 3초 이탈 시 노출·화이트밸런스·초점 고정 해제
+ */
+async function unlockCamera(track) {
+  if (!track) return;
+  const caps = track.getCapabilities?.() ?? {};
+  const adv = {};
+  if (caps.exposureMode?.includes('continuous')) adv.exposureMode = 'continuous';
+  if (caps.whiteBalanceMode?.includes('continuous')) adv.whiteBalanceMode = 'continuous';
+  if (caps.focusMode?.includes('continuous')) adv.focusMode = 'continuous';
+  if (Object.keys(adv).length === 0) return;
+  try {
+    await track.applyConstraints({ advanced: [adv] });
+  } catch (_) {
+    // 해제 미지원 시 무시
+  }
+}
+
 export function createHrvMeasurement(options = {}) {
   const {
     onStateChange = () => {},
@@ -58,6 +95,7 @@ export function createHrvMeasurement(options = {}) {
 
   let currentState = null;
   let stream = null;
+  let videoTrack = null;
   let videoEl = null;
   let canvasEl = null;
   let ctx = null;
@@ -66,9 +104,12 @@ export function createHrvMeasurement(options = {}) {
   let frameCallbackId = null;
   let useRVFC = false;
   let isActive = false;
+  let isCanceled = false;
+  let sessionSeq = 0; // 비동기 경합 방지용 세션 ID
 
   // 세션 측정 메타데이터 및 수집 배열
   let torchEnabled = false;
+  let exposureLocked = false;
   let timeSource = null; // 'captureTime' | 'mediaTime' | 'performance'
   let startedAtISO = null;
   let measurementStartTimestamp = null;
@@ -77,7 +118,8 @@ export function createHrvMeasurement(options = {}) {
   let tArr = [];
   let rArr = [];
   let gArr = [];
-  let lastPayload = null; // 업로드 실패 재시도 및 JSON 다운로드용
+  let lastPayload = null; // 서버 전송용
+  let lastDownloadData = null; // 로컬 다운로드용 페이로드 (exposureLocked 포함)
 
   // 손가락 상태 및 1초 슬라이딩 윈도우 버퍼
   let fingerDetectStartTime = null;
@@ -130,6 +172,7 @@ export function createHrvMeasurement(options = {}) {
       });
       stream = null;
     }
+    videoTrack = null;
 
     if (videoEl) {
       videoEl.srcObject = null;
@@ -140,7 +183,7 @@ export function createHrvMeasurement(options = {}) {
   }
 
   function handleVisibilityChange() {
-    if (document.hidden && isActive) {
+    if (document.hidden && (isActive || currentState === HRV_STATES.PREPARING_CAMERA)) {
       stop();
     }
   }
@@ -156,7 +199,7 @@ export function createHrvMeasurement(options = {}) {
   }
 
   /**
-   * 3-2. 프레임 단위 상태 판정 및 1초 윈도우 통계 계산
+   * 프레임 단위 상태 판정 및 1초 윈도우 통계 계산
    */
   function evaluateSignal(nowMs, rAvg, gAvg) {
     let rawStatus = 'OK';
@@ -197,7 +240,7 @@ export function createHrvMeasurement(options = {}) {
     }
 
     const stdDevR = count > 1 ? Math.sqrt(varianceSum / count) : 0;
-    const moving = stdDevR > 8;
+    const moving = stdDevR > 3;
 
     // 최근 1초 동안 문제 프레임이 20%를 초과할 때만 문제 상태로 판정
     let finalFinger = 'OK';
@@ -221,10 +264,10 @@ export function createHrvMeasurement(options = {}) {
   }
 
   /**
-   * 4. 매 프레임 처리 루프
+   * 매 프레임 처리 루프
    */
   function processFrame(now, metadata) {
-    if (!isActive || !videoEl) return;
+    if (!isActive || isCanceled || !videoEl) return;
 
     // 다음 프레임 예약
     scheduleNextFrame();
@@ -258,7 +301,7 @@ export function createHrvMeasurement(options = {}) {
       rawTimestamp = performance.now();
     }
 
-    // 3. 중복 프레임 제외 (촬영 시각이 이전 프레임과 같거나 앞서면 건너뜀)
+    // 중복 프레임 제외 (촬영 시각이 이전 프레임과 같거나 앞서면 건너뜀)
     if (rawTimestamp <= lastRawTimestamp) {
       return;
     }
@@ -306,17 +349,30 @@ export function createHrvMeasurement(options = {}) {
           setState(HRV_STATES.WARMUP);
           recordSample(0, rAvg, gAvg);
           onProgress({ elapsedMs: 0, totalMs: TOTAL_DURATION_MS, warmupMs: WARMUP_DURATION_MS });
+
+          // WARMUP 진입 순간 노출·화이트밸런스·초점 고정
+          const activeTrack = videoTrack;
+          const currentSeq = sessionSeq;
+          lockCamera(activeTrack).then((locked) => {
+            if (isCanceled || currentSeq !== sessionSeq) return;
+            if (currentState === HRV_STATES.WARMUP || currentState === HRV_STATES.MEASURING) {
+              exposureLocked = locked;
+            }
+          });
         }
       } else {
         fingerDetectStartTime = null;
       }
     } else if (currentState === HRV_STATES.WARMUP || currentState === HRV_STATES.MEASURING) {
-      // 손가락 이탈 체크 (3초 이상 떨어지면 초기화 후 WAITING_FINGER 복귀)
-      if (signal.finger !== 'OK') {
+      // 측정 중 초기화 대상: NO_FINGER, TOO_DARK만 3초 이상 지속 시 초기화 (TOO_BRIGHT, moving은 안내만)
+      const isLostCondition = signal.finger === 'NO_FINGER' || signal.finger === 'TOO_DARK';
+      if (isLostCondition) {
         if (fingerLostStartTime === null) {
           fingerLostStartTime = rawTimestamp;
         } else if (rawTimestamp - fingerLostStartTime >= FINGER_LOST_RESET_MS) {
           resetCollectedData();
+          exposureLocked = false;
+          unlockCamera(videoTrack); // [1-1] 3초 이탈 시 고정 해제
           onProgress({ elapsedMs: 0, totalMs: TOTAL_DURATION_MS, warmupMs: WARMUP_DURATION_MS });
           setState(HRV_STATES.WAITING_FINGER);
           return;
@@ -357,7 +413,7 @@ export function createHrvMeasurement(options = {}) {
   }
 
   function scheduleNextFrame() {
-    if (!isActive || !videoEl) return;
+    if (!isActive|| isCanceled || !videoEl) return;
     if (useRVFC) {
       frameCallbackId = videoEl.requestVideoFrameCallback(processFrame);
     } else {
@@ -377,8 +433,14 @@ export function createHrvMeasurement(options = {}) {
       g: gArr,
     };
 
+    // 테스트 페이지 다운로드용 JSON 데이터 (exposureLocked 포함)
+    lastDownloadData = {
+      ...lastPayload,
+      exposureLocked,
+    };
+
     if (skipUpload) {
-      setState(HRV_STATES.DONE, { skippedUpload: true, payload: lastPayload });
+      setState(HRV_STATES.DONE, { skippedUpload: true, payload: lastDownloadData });
       return;
     }
 
@@ -413,7 +475,7 @@ export function createHrvMeasurement(options = {}) {
    * 측정 세션 시작
    */
   async function start() {
-    if (isActive) return;
+    if (isActive || currentState === HRV_STATES.PREPARING_CAMERA) return;
 
     // 6. HTTPS 보안 컨텍스트 검증
     if (!window.isSecureContext) {
@@ -426,17 +488,23 @@ export function createHrvMeasurement(options = {}) {
       return;
     }
 
+    const mySession = ++sessionSeq;
+    isCanceled = false;
+
     resetCollectedData();
     recentFrames = [];
     lastRawTimestamp = -Infinity;
     timeSource = null;
     torchEnabled = false;
+    exposureLocked = false;
     lastPayload = null;
+    lastDownloadData = null;
 
     setState(HRV_STATES.PREPARING_CAMERA);
 
+    let acquiredStream = null;
     try {
-      stream = await navigator.mediaDevices.getUserMedia({
+      acquiredStream = await navigator.mediaDevices.getUserMedia({
         audio: false,
         video: {
           facingMode: { ideal: 'environment' },
@@ -446,6 +514,8 @@ export function createHrvMeasurement(options = {}) {
         },
       });
     } catch (err) {
+      if (isCanceled || mySession !== sessionSeq) return;
+
       if (err && (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError')) {
         setState(HRV_STATES.ERROR, HRV_ERRORS.PERMISSION_DENIED);
       } else {
@@ -454,7 +524,15 @@ export function createHrvMeasurement(options = {}) {
       return;
     }
 
-    const videoTrack = stream.getVideoTracks()[0];
+    if (isCanceled || mySession !== sessionSeq) {
+      acquiredStream.getTracks().forEach((t) => {
+        try { t.stop(); } catch (_) {}
+      });
+      return;
+    }
+
+    stream = acquiredStream;
+    videoTrack = stream.getVideoTracks()[0];
     if (!videoTrack) {
       cleanupCamera();
       setState(HRV_STATES.ERROR, HRV_ERRORS.NO_CAMERA);
@@ -470,9 +548,17 @@ export function createHrvMeasurement(options = {}) {
         await videoTrack.applyConstraints({
           advanced: [{ torch: true }],
         });
+        if (isCanceled || mySession !== sessionSeq) {
+          cleanupCamera();
+          return;
+        }
         torchEnabled = true;
       }
     } catch (_) {
+      if (isCanceled || mySession !== sessionSeq) {
+        cleanupCamera();
+        return;
+      }
       torchEnabled = false;
     }
 
@@ -490,8 +576,18 @@ export function createHrvMeasurement(options = {}) {
     try {
       await videoEl.play();
     } catch (_) {
+      if (isCanceled || mySession !== sessionSeq) {
+        cleanupCamera();
+        return;
+      }
       cleanupCamera();
       setState(HRV_STATES.ERROR, HRV_ERRORS.NO_CAMERA);
+      return;
+    }
+
+    // videoEl.play() 직후 중단 여부 재확인
+    if (isCanceled || mySession !== sessionSeq) {
+      cleanupCamera();
       return;
     }
 
@@ -499,6 +595,11 @@ export function createHrvMeasurement(options = {}) {
     isActive = true;
 
     await requestWakeLock();
+    if (isCanceled || mySession !== sessionSeq) {
+      cleanupCamera();
+      return;
+    }
+
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     setState(HRV_STATES.WAITING_FINGER);
@@ -510,8 +611,11 @@ export function createHrvMeasurement(options = {}) {
    */
   function stop() {
     if (!isActive && currentState !== HRV_STATES.PREPARING_CAMERA) return;
+    isCanceled = true;
+    sessionSeq += 1;
     cleanupCamera();
     resetCollectedData();
+    exposureLocked = false;
     setState(HRV_STATES.STOPPED);
   }
 
@@ -529,10 +633,11 @@ export function createHrvMeasurement(options = {}) {
    * 테스트/디버깅용: 수집 완료된 페이로드 반환 (또는 측정 중 현재 스냅샷 반환)
    */
   function getCollectedData() {
-    if (lastPayload) return lastPayload;
+    if (lastDownloadData) return lastDownloadData;
     return {
       startedAt: startedAtISO,
       torch: torchEnabled,
+      exposureLocked,
       timeSource: timeSource || 'performance',
       t: [...tArr],
       r: [...rArr],
