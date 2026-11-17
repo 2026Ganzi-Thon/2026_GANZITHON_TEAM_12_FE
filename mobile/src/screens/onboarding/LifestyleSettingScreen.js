@@ -10,7 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest } from '../../api/client';
 
 // 백엔드 등록 표준 활동 코드 매핑
@@ -154,35 +154,38 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
         <View style={styles.stepperCard}>
           <View style={styles.stepperHeader}>
             <Text style={styles.stepperLabel}>기상 시간</Text>
-            <Text style={styles.stepperSubLabel}>평일 기준</Text>
+            <Text style={styles.stepperSubLabel}>아침 측정 시간</Text>
           </View>
           <View style={styles.stepperControlRow}>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setWakeMinutes((m) => m - 30)}
+              onPress={() => setWakeMinutes((m) => m - 10)}
             >
               <Text style={styles.circleBtnText}>−</Text>
             </TouchableOpacity>
             <Text style={styles.stepperValue}>{formatWakeTimeKorean(wakeMinutes)}</Text>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setWakeMinutes((m) => m + 30)}
+              onPress={() => setWakeMinutes((m) => m + 10)}
             >
               <Text style={styles.circleBtnText}>+</Text>
             </TouchableOpacity>
           </View>
+          <Text style={styles.stepperFootnote}>
+            ⓘ 일어난 직후 측정해요.
+          </Text>
         </View>
 
         {/* 최소 수면 시간 스테퍼 카드 */}
         <View style={styles.stepperCard}>
           <View style={styles.stepperHeader}>
-            <Text style={styles.stepperLabel}>최소 수면 시간</Text>
-            <Text style={styles.stepperSubLabel}>지켜야 할 하한</Text>
+            <Text style={styles.stepperLabel}>취침 시간</Text>
+            <Text style={styles.stepperSubLabel}>목표 취침 시각</Text>
           </View>
           <View style={styles.stepperControlRow}>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setSleepDurationMinutes((d) => Math.max(240, d - 30))}
+              onPress={() => setSleepDurationMinutes((d) => Math.max(240, d - 10))}
             >
               <Text style={styles.circleBtnText}>−</Text>
             </TouchableOpacity>
@@ -191,14 +194,11 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
             </Text>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setSleepDurationMinutes((d) => Math.min(720, d + 30))}
+              onPress={() => setSleepDurationMinutes((d) => Math.min(720, d + 10))}
             >
               <Text style={styles.circleBtnText}>+</Text>
             </TouchableOpacity>
           </View>
-          <Text style={styles.stepperFootnote}>
-            ⓘ 이 시간보다 짧게 잠들면 일정 분석에서 먼저 알려드려요.
-          </Text>
         </View>
 
         {/* 선호 회복 활동 */}
@@ -259,7 +259,7 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
         {/* 하단 안내 박스 */}
         <View style={styles.infoBanner}>
           <Text style={styles.infoBannerText}>
-            입력한 기상 시간과 회복 활동은 일정 분석과 맞춤 회복 추천에 활용돼요. 분석이 끝난 뒤에도 설정에서 언제든 바꿀 수 있어요.
+            🖍 입력한 기상 시간과 취침 시간, 회복 활동은 일정 분석과 맞춤 회복 추천에 활용돼요.&nbsp;분석이 끝난 뒤에도 설정에서 언제든 바꿀 수 있어요. 
           </Text>
         </View>
       </ScrollView>
@@ -267,7 +267,8 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
       {/* 하단 버튼 */}
       <View style={styles.bottomNavRow}>
         <TouchableOpacity style={styles.prevBtn} onPress={onBack}>
-          <Text style={styles.prevBtnText}>‹ 이전</Text>
+          <Text style={styles.prevBtnIcon}>‹</Text>
+          <Text style={styles.prevBtnText}>이전</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.nextBtn, (selectedCodes.length === 0 || submitting) && styles.nextBtnDisabled]}
@@ -311,27 +312,27 @@ const styles = StyleSheet.create({
   },
   scrollContent: { paddingHorizontal: 24, paddingTop: 12, paddingBottom: 28 },
   tagPill: {
-    alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceAccent,
-    paddingHorizontal: 12,
     paddingVertical: 5,
-    borderRadius: 12,
     marginBottom: 14,
   },
-  tagPillText: { fontSize: 12, fontWeight: '600', color: Colors.primary },
+  tagPillText: { fontSize: 14, fontWeight: '600', color: Colors.primary },
   title: {
     fontSize: 24,
     fontWeight: '700',
     color: Colors.textPrimary,
     lineHeight: 33,
+    letterSpacing: -0.8,
     marginBottom: 8,
   },
-  subtitle: { fontSize: 14, color: Colors.textSecondary, marginBottom: 22 },
+  subtitle: { fontSize: 13.5, 
+    color: Colors.textSecondary, 
+    letterSpacing: -0.6,
+    marginBottom: 22 },
   stepperCard: {
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 16,
+    borderRadius: 12,
     padding: 18,
     marginBottom: 14,
   },
@@ -340,7 +341,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     marginBottom: 16,
   },
-  stepperLabel: { fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
+  stepperLabel: { fontSize: 14, fontWeight: '600', color: Colors.textPrimary },
   stepperSubLabel: { fontSize: 12, color: Colors.textMuted },
   stepperControlRow: {
     flexDirection: 'row',
@@ -349,17 +350,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
   },
   circleBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 42,
+    height: 42,
+    borderRadius: 300,
     borderWidth: 1,
     borderColor: Colors.border,
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.surface,
   },
-  circleBtnText: { fontSize: 18, color: Colors.textPrimary, fontWeight: '500' },
-  stepperValue: { fontSize: 21, fontWeight: '700', color: Colors.textPrimary },
+  circleBtnText: { fontSize: 26, color: Colors.textPrimary, fontWeight: '500', marginBottom: 3 },
+  stepperValue: { fontSize: 24, fontWeight: '700', color: Colors.textPrimary, letterSpacing: -0.8, marginBottom: 2 },
   stepperFootnote: { fontSize: 12, color: Colors.textMuted, marginTop: 14 },
   activitySection: { marginTop: 8, marginBottom: 18 },
   activityHeader: {
@@ -367,9 +368,9 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  activityTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
-  activityCount: { fontSize: 13, fontWeight: '600', color: Colors.primary },
-  activitySubtitle: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, marginBottom: 14 },
+  activityTitle: { fontSize: 15, fontWeight: '700', color: Colors.textPrimary, marginBottom: 3 },
+  activityCount: { fontSize: 12, fontWeight: '500', color: Colors.primary },
+  activitySubtitle: { fontSize: 12, color: Colors.textSecondary, marginTop: 2, marginBottom: 16 },
   chipWrap: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
   chip: {
     paddingHorizontal: 14,
@@ -387,7 +388,7 @@ const styles = StyleSheet.create({
     borderStyle: 'dashed',
   },
   chipText: { fontSize: 13, fontWeight: '500', color: Colors.textPrimary },
-  chipTextActive: { color: Colors.primaryText, fontWeight: '600' },
+  chipTextActive: { color: Colors.primaryText, fontWeight: '500' },
   customInputCard: {
     marginTop: 12,
     backgroundColor: Colors.surface,
@@ -436,10 +437,22 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
+    flexDirection: 'row', // 아이콘과 텍스트 가로 배치
     alignItems: 'center',
     justifyContent: 'center',
+    gap: 4, // ‹ 와 '이전' 사이 간격
   },
-  prevBtnText: { fontSize: 15, fontWeight: '600', color: Colors.textSecondary },
+  prevBtnIcon: {
+    fontSize: 26, // 원하는 크기로 조절 (예: 20~24)
+    fontWeight: '600',
+    color: Colors.textSecondary,
+    marginTop: -6, // 글자 높이와 수직 중앙 미세 보정
+  },
+  prevBtnText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: Colors.textSecondary,
+  },
   nextBtn: {
     flex: 1,
     height: 52,

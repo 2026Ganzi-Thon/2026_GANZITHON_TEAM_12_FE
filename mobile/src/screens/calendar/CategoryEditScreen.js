@@ -10,7 +10,7 @@ import {
   Alert,
   ActivityIndicator,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest } from '../../api/client';
 
 const WORK_STUDY_CATEGORIES = [

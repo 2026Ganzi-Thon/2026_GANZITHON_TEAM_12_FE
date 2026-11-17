@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { Colors } from '../theme/tokens';
+import { Colors, Fonts } from '../theme/tokens';
 import HomeScreen from '../screens/home/HomeScreen';
 import CalendarScreen from '../screens/calendar/CalendarScreen';
 import CategoryEditScreen from '../screens/calendar/CategoryEditScreen';

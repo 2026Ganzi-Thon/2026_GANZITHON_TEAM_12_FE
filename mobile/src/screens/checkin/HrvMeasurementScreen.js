@@ -10,7 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { createHrvMeasurement } from '../../utils/hrvMeasurement';
 
 const PREPARE_SEC = 10;

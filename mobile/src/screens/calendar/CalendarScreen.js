@@ -10,7 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const CATEGORY_LABELS = {

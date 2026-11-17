@@ -8,7 +8,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { apiRequest, refreshCsrfToken, ApiError } from '../api/client';
-import { Colors } from '../theme/tokens';
+import { Colors, Fonts } from '../theme/tokens';
 import WelcomeScreen from '../screens/onboarding/WelcomeScreen';
 import ProfileConsentScreen from '../screens/onboarding/ProfileConsentScreen';
 import CbiAssessmentScreen from '../screens/onboarding/CbiAssessmentScreen';

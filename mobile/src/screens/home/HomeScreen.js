@@ -10,7 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
@@ -441,6 +441,7 @@ const styles = StyleSheet.create({
   stampCircle: {
     width: 34,
     height: 34,
+    borderStyle: 'dashed',
     borderRadius: 17,
     borderWidth: 1.5,
     borderColor: '#C5CFC9',

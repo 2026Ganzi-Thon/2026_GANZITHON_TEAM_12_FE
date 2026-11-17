@@ -12,39 +12,39 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, AuthUrls, refreshCsrfToken } from '../../api/client';
 
 const CONSENT_ITEMS = [
   {
     key: 'TERMS',
-    title: '서비스 이용약관 동의',
-    subtitle: '필수 · Come & Down 서비스 이용 규칙',
+    title: '이용약관 동의',
+    subtitle: '필수 · 서비스 이용 규칙과 회원 의무',
   },
   {
     key: 'PRIVACY',
-    title: '개인정보 수집·이용 동의',
-    subtitle: '필수 · 이메일, 닉네임, 근무·수면 시간대',
+    title: '개인정보 처리방침 동의',
+    subtitle: '필수 · 이메일, 닉네임, 측정 시간·수면 시간대',
   },
   {
     key: 'AGE_14',
-    title: '만 14세 이상 확인',
-    subtitle: '필수 · 본 서비스는 만 14세 이상 이용 가능',
+    title: '만 14세 이상입니다',
+    subtitle: '필수 · 만 14세 미만은 가입할 수 없어요',
   },
   {
     key: 'SENSITIVE_HRV',
     title: '건강정보 처리 동의',
-    subtitle: '필수 · 아침 체크 응답, HRV 측정 및 번아웃 지수',
+    subtitle: '필수 · · 심박 측정값(HRV), 아침 체크 응답, 번아웃 체크 · 영상은 저장하지 않음',
   },
   {
     key: 'CALENDAR',
     title: 'Google 캘린더 연동 동의',
-    subtitle: '필수 · 일정 읽기 및 회복 추천 일정 등록',
+    subtitle: '필수 · 일정 읽기 + 내가 승인한 일정 추가',
   },
   {
     key: 'AI_NOTICE',
-    title: 'AI 활용 고지 및 동의',
-    subtitle: '필수 · 일정 분류, 상태 요약 및 휴식 제안 생성',
+    title: 'AI 활용 안내 동의',
+    subtitle: '필수 · 일정 요약과 휴식 제안 생성',
   },
 ];
 
@@ -182,9 +182,9 @@ export default function ProfileConsentScreen({ userEmail, initialNickname, onCom
               }}
               placeholder="닉네임을 입력해 주세요"
               placeholderTextColor={Colors.textMuted}
-              maxLength={20}
+              maxLength={10}
             />
-            <Text style={styles.charCounter}>{nickname.length}/20</Text>
+            <Text style={styles.charCounter}>{nickname.length}/10</Text>
           </View>
           {fieldErrors.nickname ? (
             <Text style={styles.fieldErrorText}>{fieldErrors.nickname}</Text>
@@ -239,7 +239,9 @@ export default function ProfileConsentScreen({ userEmail, initialNickname, onCom
                     <Text style={styles.consentTitle}>{item.title}</Text>
                     <Text style={styles.consentSubtitle}>{item.subtitle}</Text>
                   </View>
-                  <Text style={styles.viewDetailText}>보기</Text>
+                  {item.key !== 'AGE_14' && (
+                    <Text style={styles.viewDetailText}>보기</Text>
+                  )}
                 </TouchableOpacity>
                 {errorMsg && <Text style={styles.fieldErrorText}>{errorMsg}</Text>}
               </View>
@@ -313,10 +315,12 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: Colors.textPrimary,
+    letterSpacing: -0.6,
     marginBottom: 6,
   },
   subtitle: {
     fontSize: 14,
+    fontWeight: '400',
     color: Colors.textSecondary,
     marginBottom: 22,
   },
@@ -327,8 +331,8 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 14,
-    paddingHorizontal: 16,
+    borderRadius: 12,
+    paddingHorizontal: 17,
     height: 52,
     marginBottom: 22,
   },
@@ -345,19 +349,13 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   emailText: {
-    fontSize: 14,
+    fontSize: 13,
     color: Colors.textPrimary,
     fontWeight: '500',
   },
-  connectedPill: {
-    backgroundColor: Colors.surfaceAccent,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
   connectedPillText: {
     fontSize: 12,
-    color: Colors.primary,
+    color: '#57735C',
     fontWeight: '600',
   },
   inputSection: {
@@ -376,6 +374,7 @@ const styles = StyleSheet.create({
   },
   requiredTag: {
     fontSize: 12,
+    fontWeight: '500',
     color: Colors.textSecondary,
   },
   inputWrapper: {
@@ -384,7 +383,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 14,
+    borderRadius: 12,
     paddingHorizontal: 16,
     height: 52,
   },
@@ -394,6 +393,7 @@ const styles = StyleSheet.create({
   textInput: {
     flex: 1,
     fontSize: 15,
+    fontWeight: '500',
     color: Colors.textPrimary,
   },
   charCounter: {
@@ -403,8 +403,10 @@ const styles = StyleSheet.create({
   },
   helperText: {
     fontSize: 12,
+    fontWeight: '400',
     color: Colors.textMuted,
-    marginTop: 6,
+    marginTop: 10,
+    letterSpacing: -0.3,
   },
   fieldErrorText: {
     fontSize: 12,
@@ -419,7 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    borderRadius: 14,
+    borderRadius: 12,
     padding: 16,
     marginBottom: 12,
   },
@@ -442,6 +444,7 @@ const styles = StyleSheet.create({
   },
   agreeAllSubtitle: {
     fontSize: 12,
+    foweight: '400',
     color: Colors.textSecondary,
     marginTop: 2,
   },
@@ -467,8 +470,8 @@ const styles = StyleSheet.create({
     borderColor: Colors.warningText,
   },
   checkbox: {
-    width: 22,
-    height: 22,
+    width: 20,
+    height: 20,
     borderRadius: 6,
     borderWidth: 1.5,
     borderColor: Colors.border,
@@ -477,8 +480,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: '#5F7D64',
+    borderColor: '#5F7D64',
   },
   checkmark: {
     color: Colors.primaryText,
@@ -512,8 +515,8 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     backgroundColor: Colors.primary,
-    height: 54,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 10,
@@ -530,5 +533,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 12,
     color: Colors.textMuted,
+    marginTop: 6,
+    marginBottom: 18,
   },
 });

@@ -10,7 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const RISK_META = {
@@ -268,7 +268,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
                 <Text style={styles.metricValue}>{pastMonth?.lateNightCount ?? 0}회</Text>
               </View>
               <View style={styles.metricCard}>
-                <Text style={styles.metricLabel}>마감·시험</Text>
+                <Text style={styles.metricLabel}>마감 · 시험</Text>
                 <Text style={styles.metricValue}>{pastMonth?.deadlineCount ?? 0}건</Text>
               </View>
             </View>
@@ -300,7 +300,9 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
 
                       return (
                         <View key={week.weekStart} style={styles.barColumn}>
-                          <Text
+                          
+                          <View style={styles.barTrackVertical}>
+                            <Text
                             style={[
                               styles.barTopPct,
                               {
@@ -313,7 +315,6 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
                           >
                             {displayVal}
                           </Text>
-                          <View style={styles.barTrackVertical}>
                             <View
                               style={[
                                 styles.barFillVertical,
@@ -503,7 +504,7 @@ const styles = StyleSheet.create({
   },
   scrollContent: { paddingHorizontal: 24, paddingTop: 8, paddingBottom: 28 },
   categoryLabel: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: Colors.accentBar,
     marginBottom: 8,
@@ -555,14 +556,14 @@ const styles = StyleSheet.create({
     marginBottom: 14,
   },
   barColumn: { alignItems: 'center', flex: 1 },
-  barTopPct: { fontSize: 12, fontWeight: '700', marginBottom: 6 },
+  barTopPct: { fontSize: 11, fontWeight: '700', marginBottom: 6 },
   barTrackVertical: {
     width: 30,
     height: 84,
     justifyContent: 'flex-end',
     marginBottom: 10,
   },
-  barFillVertical: { width: '100%', borderRadius: 6 },
+  barFillVertical: { width: '100%', borderTopLeftRadius: 6, borderTopRightRadius: 6 },
   barDivider: {
     width: '100%',
     height: 1,
@@ -655,7 +656,11 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   completeBtnText: { fontSize: 16, fontWeight: '600', color: Colors.primaryText },
-  footerFootnote: { textAlign: 'center', fontSize: 11, color: Colors.textMuted },
+  footerFootnote: { textAlign: 'center', fontSize: 11, 
+    color: Colors.textMuted,
+    marginTop: 8,
+    marginBottom: 18, 
+ },
   modalOverlay: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.4)',

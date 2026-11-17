@@ -9,7 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, AuthUrls, refreshCsrfToken, ApiError } from '../../api/client';
 
 export default function ScheduleAnalyzingScreen({

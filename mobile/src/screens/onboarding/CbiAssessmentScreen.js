@@ -9,13 +9,13 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, generateUuid } from '../../api/client';
 
 const LEVEL_LABELS = {
-  LOW: { text: '보통', bg: Colors.chipNeutralBg, color: Colors.textSecondary },
-  HIGH: { text: '높은 편', bg: Colors.chipHighBg, color: Colors.primary },
-  VERY_HIGH: { text: '매우 높음', bg: Colors.warningBg, color: Colors.warningText },
+  LOW: { text: '보통', color: Colors.textSecondary },
+  HIGH: { text: '높은 편', color: Colors.primary },
+  VERY_HIGH: { text: '매우 높음', color: Colors.warningText },
 };
 
 export default function CbiAssessmentScreen({ 
@@ -127,7 +127,7 @@ export default function CbiAssessmentScreen({
     );
   }
 
-  // [화면 4] 피로도 체크 결과 화면
+  // 피로도 체크 결과 화면
   if (result) {
     const personalBadge = LEVEL_LABELS[result.personal?.level] || LEVEL_LABELS.LOW;
     const workBadge = LEVEL_LABELS[result.work?.level] || LEVEL_LABELS.LOW;
@@ -146,15 +146,15 @@ export default function CbiAssessmentScreen({
             <Text style={styles.tagPillText}>피로도 체크 결과</Text>
           </View>
 
-          <Text style={styles.resultTitle}>몸과 마음의 피로를{'\n'}각각 살펴봤어요</Text>
+          <Text style={styles.resultTitle}>지난 한 주의 피로를{'\n'}두 가지로 나눠 봤어요</Text>
           <Text style={styles.resultSubtitle}>
-            지난 한 주를 떠올리며 답한 내용을 바탕으로 정리했어요
+            떠올려 주신 답변을 바탕으로 정리했어요
           </Text>
 
-          {/* 신체 피로도 카드 */}
+          {/* 몸과 마음의 피로도 카드 */}
           <View style={styles.scoreCard}>
             <View style={styles.scoreCardHeader}>
-              <Text style={styles.scoreCardTitle}>신체 피로도</Text>
+              <Text style={styles.scoreCardTitle}>몸과 마음의 피로</Text>
               <View style={[styles.levelBadge, { backgroundColor: personalBadge.bg }]}>
                 <Text style={[styles.levelBadgeText, { color: personalBadge.color }]}>
                   {personalBadge.text}
@@ -175,10 +175,10 @@ export default function CbiAssessmentScreen({
             </View>
           </View>
 
-          {/* 심리적 부담 카드 */}
+          {/* 일·공부로 인한 피로 카드 */}
           <View style={styles.scoreCard}>
             <View style={styles.scoreCardHeader}>
-              <Text style={styles.scoreCardTitle}>심리적 부담</Text>
+              <Text style={styles.scoreCardTitle}>일·공부로 인한 피로</Text>
               <View style={[styles.levelBadge, { backgroundColor: workBadge.bg }]}>
                 <Text style={[styles.levelBadgeText, { color: workBadge.color }]}>
                   {workBadge.text}
@@ -212,6 +212,10 @@ export default function CbiAssessmentScreen({
             <Text style={styles.interpretationBody}>{interpretationSummary}</Text>
           </View>
 
+          <Text style={styles.scoreFootnote}>
+            🛡 이 결과는 진단이 아니에요. 스스로의 상태를 돌아보는 참고 자료로만 봐 주세요.
+          </Text>
+
           {/* 도움받을 수 있는 곳 카드 (highRisk 또는 safety.show일 때 강조 노출) */}
           {(result.highRisk || result.safety?.show) && (
             <TouchableOpacity
@@ -235,7 +239,7 @@ export default function CbiAssessmentScreen({
 
         <View style={styles.bottomNavRow}>
           <TouchableOpacity style={styles.prevBtn} onPress={handlePrev}>
-            <Text style={styles.prevBtnText}>‹ 이전</Text>
+            <Text style={styles.prevBtnText}>‹&nbsp;&nbsp; 이전</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={styles.nextBtn}
@@ -275,7 +279,7 @@ export default function CbiAssessmentScreen({
       <ScrollView contentContainerStyle={styles.questionScroll}>
         <View style={styles.tagPill}>
           <Text style={styles.tagPillText}>
-            {isPersonal ? '피로도 체크' : '소진도 체크'}
+            {isPersonal ? '피로도 체크' : '번아웃 체크'}
           </Text>
         </View>
 
@@ -283,7 +287,7 @@ export default function CbiAssessmentScreen({
         <Text style={styles.questionSubtitle}>
           {isPersonal
             ? '몸과 마음 상태에 가장 가까운 항목 하나를 골라 주세요'
-            : '요즘 하루를 떠올리며 가장 가까운 항목 하나를 골라 주세요'}
+            : '최근 한 달을 떠올리며 가장 가까운 항목 하나를 골라 주세요'}
         </Text>
 
         {/* 보기 리스트 */}
@@ -395,16 +399,14 @@ const styles = StyleSheet.create({
   },
   tagPill: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceAccent,
-    paddingHorizontal: 12,
     paddingVertical: 5,
     borderRadius: 12,
-    marginBottom: 14,
   },
   tagPillText: {
-    fontSize: 12,
+    fontSize: 14,
     fontWeight: '600',
     color: Colors.primary,
+    marginBottom: 14,
   },
   questionTitle: {
     fontSize: 23,
@@ -517,6 +519,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: Colors.textPrimary,
     lineHeight: 34,
+    letterSpacing: -0.8,
     marginBottom: 8,
   },
   resultSubtitle: {
@@ -543,11 +546,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: Colors.textSecondary,
   },
-  levelBadge: {
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
   levelBadgeText: {
     fontSize: 12,
     fontWeight: '600',
@@ -567,9 +565,9 @@ const styles = StyleSheet.create({
     color: Colors.textMuted,
   },
   barTrack: {
-    height: 6,
+    height: 8,
     backgroundColor: Colors.surfaceMuted,
-    borderRadius: 3,
+    borderRadius: 5,
     overflow: 'hidden',
   },
   barFill: {

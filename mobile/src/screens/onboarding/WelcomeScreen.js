@@ -9,7 +9,7 @@ import {
   Alert,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { Colors } from '../../theme/tokens';
+import { Colors, Fonts } from '../../theme/tokens';
 import { AuthUrls, refreshCsrfToken } from '../../api/client';
 
 export default function WelcomeScreen({ onAuthSuccess, authError, onDevSkip }) {
@@ -78,7 +78,7 @@ export default function WelcomeScreen({ onAuthSuccess, authError, onDevSkip }) {
           onPress={handleGoogleLogin}
         >
           <Text style={styles.secondaryButtonText}>
-            이미 계정이 있어요 · <Text style={styles.secondaryButtonBold}>로그인</Text>
+            이미 계정이 있어요  ·  <Text style={styles.secondaryButtonBold}>로그인</Text>
           </Text>
         </TouchableOpacity>
 
@@ -86,11 +86,6 @@ export default function WelcomeScreen({ onAuthSuccess, authError, onDevSkip }) {
           의료기기가 아니며 질병 유무를 판단하지 않아요
         </Text>
 
-        {__DEV__ && onDevSkip && (
-          <TouchableOpacity style={styles.devSkipBtn} onPress={onDevSkip}>
-            <Text style={styles.devSkipText}>[DEV] 로그인 건너뛰기 →</Text>
-          </TouchableOpacity>
-        )}
       </View>
     </SafeAreaView>
   );
@@ -109,60 +104,64 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
-    marginBottom: 64,
+    marginBottom: 115,
   },
   logoIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 18,
-    backgroundColor: '#F3DFD3',
+    width: 80,
+    height: 80,
+    borderRadius: 24,
+    backgroundColor: '#F7EADF',
     overflow: 'hidden',
     alignItems: 'center',
     justifyContent: 'flex-end',
-    marginBottom: 12,
+    marginBottom: 17,
   },
   logoSun: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: '#E5B299',
-    marginBottom: -8,
+    width: 44,
+    height: 44,
+    borderRadius: 100,
+    backgroundColor: '#F0B7A4',
+    marginBottom: -14,
   },
   logoHill: {
-    width: 72,
-    height: 26,
-    borderTopLeftRadius: 36,
-    borderTopRightRadius: 36,
+    width: 130,
+    height: 118,
+    borderTopLeftRadius: 1000,
+    borderTopRightRadius: 1000,
+    marginBottom: -87,
     backgroundColor: Colors.primary,
   },
   brandName: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.textPrimary,
-    letterSpacing: -0.3,
+    fontFamily: Fonts.display,
+    fontSize: 20,
+    fontWeight: '400',
+    color: Colors.primary,
+    letterSpacing: -0.5,
   },
   copySection: {
     marginTop: 12,
   },
   accentDash: {
-    width: 20,
+    width: 36,
     height: 3,
-    borderRadius: 2,
-    backgroundColor: '#E5B299',
+    borderRadius: 200,
+    backgroundColor: '#F0B7A4',
     marginBottom: 16,
   },
   headline: {
-    fontSize: 30,
+    fontSize: 28,
     fontWeight: '700',
     color: Colors.textPrimary,
     lineHeight: 40,
-    letterSpacing: -0.6,
+    letterSpacing: -0.7,
     marginBottom: 14,
   },
   subheadline: {
     fontSize: 15,
+    fontWeight: '400',
     color: Colors.textSecondary,
-    lineHeight: 23,
+    lineHeight: 25.5,
+    letterSpacing: -0.3,
   },
   errorBanner: {
     marginTop: 20,
@@ -183,8 +182,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: Colors.primary,
-    height: 54,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 12,
     marginBottom: 10,
   },
   googleIcon: {
@@ -204,31 +203,25 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderWidth: 1,
     borderColor: Colors.border,
-    height: 52,
-    borderRadius: 14,
+    height: 56,
+    borderRadius: 12,
     marginBottom: 18,
   },
   secondaryButtonText: {
-    fontSize: 14,
+    fontSize: 15,
     color: Colors.textSecondary,
   },
   secondaryButtonBold: {
-    fontWeight: '700',
+    fontWeight: '600',
+    fontSize: 15,
     color: Colors.textPrimary,
   },
   disclaimer: {
     textAlign: 'center',
     fontSize: 12,
+    fontWeight: '400',
     color: Colors.textMuted,
-  },
-  devSkipBtn: {
-    marginTop: 14,
-    paddingVertical: 8,
-    alignItems: 'center',
-  },
-  devSkipText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    textDecorationLine: 'underline',
-  },
+    marginTop: 6,
+    marginBottom: 18,
+  }
 });
