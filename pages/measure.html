@@ -1,0 +1,38 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>아침 1분 체크</title>
+<!-- 공용 셸. 둘이 합의하고 동결한다. 화면 내용은 measure.js(정상) / measure-error.js(예외)가 #state에 그린다. -->
+<link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="./measure.css">
+<link rel="stylesheet" href="./measure-error.css">
+
+<header class="m-head">
+  <h1 class="m-head__title">아침 1분 체크</h1>
+  <span class="m-head__baseline" id="baseline" hidden></span>
+</header>
+
+<nav class="m-steps" aria-label="측정 단계">
+  <ol>
+    <li data-step="measurement" aria-current="step">1. 손가락 측정</li>
+    <li data-step="condition">2. 컨디션 체크</li>
+    <li data-step="breathing">3. 천천히 숨쉬기</li>
+  </ol>
+</nav>
+
+<main class="m-main">
+  <div class="m-camera" id="camera" hidden>
+    <video id="video" playsinline muted></video>
+    <canvas id="canvas" hidden></canvas>
+  </div>
+  <!-- 유일한 공유 지점 -->
+  <div id="state" role="status" aria-live="polite"></div>
+</main>
+
+<nav class="m-tabs" aria-label="메뉴">
+  <a href="../index.html">홈</a><a href="./calendar.html">캘린더</a>
+  <a href="./measure.html" aria-current="page">측정</a>
+  <a href="./report.html">리포트</a><a href="./mypage.html">MY</a>
+</nav>
+
+<script type="module" src="./measure.js"></script>
