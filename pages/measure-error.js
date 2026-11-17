@@ -6,13 +6,16 @@
  */
 import { HRV_STATES, HRV_ERRORS } from '../hrvMeasurement.js';
 
-// B3-9 사유별 문구. 시안에는 3개뿐이라 LOW_FPS는 새로 썼다(디자인 확인 필요).
+// B3-9 사유별 문구. 해당하는 사유 1개만 보여준다 (시안의 "사유별 문구" 목록은 설명용 메모).
+// 문구는 임시다 — 노션 "와이어프레임 수정 요청사항 2" 확정본으로 교체한다.
 const RETRY_REASONS = {
   NO_PULSE:  { title: '맥박이 안 잡힘',   body: '손가락으로 카메라와 플래시를 함께 덮어주세요' },
   TOO_NOISY: { title: '잡음·움직임이 큼', body: '움직이지 말고 손을 편하게 둔 채 다시 측정해주세요' },
   TOO_SHORT: { title: '측정이 끊김',     body: '측정이 중간에 끊겼어요. 다시 측정해주세요' },
   LOW_FPS:   { title: '화면이 느렸어요',  body: '다른 앱을 닫고 다시 측정해주세요' },
 };
+// 서버가 새 사유를 추가해도 화면이 비지 않게 한다.
+const UNKNOWN_REASON = { title: '측정이 잘 되지 않았어요', body: '손을 편하게 둔 채 다시 측정해주세요' };
 
 // 403/401은 측정 화면에서 해결할 수 없다 → 담당 화면으로 보낸다 (API.md 0절 "접근 조건")
 const ACCESS_ERRORS = {
@@ -34,8 +37,7 @@ export function pickView(state, detail) {
       view: 'RETRY',
       title: '다시 측정이 필요해요',
       body: '손가락으로 카메라와 플래시를 함께 덮어주세요',
-      reasons: RETRY_REASONS,
-      highlight: RETRY_REASONS[detail.measurement.retryReason] ? detail.measurement.retryReason : null,
+      reason: RETRY_REASONS[detail.measurement.retryReason] ?? UNKNOWN_REASON,
       buttons: ['restart', 'skipToday'],
     };
   }
@@ -126,18 +128,17 @@ export function renderError(root, state, detail, actions = {}) {
     root.append(p);
   }
 
-  if (v.reasons) {
-    const dl = document.createElement('dl');
-    dl.className = 'err__reasons';
-    for (const [code, r] of Object.entries(v.reasons)) {
-      const dt = document.createElement('dt');
-      dt.textContent = r.title;
-      const dd = document.createElement('dd');
-      dd.textContent = r.body;
-      if (code === v.highlight) dt.classList.add('is-current');
-      dl.append(dt, dd);
-    }
-    root.append(dl);
+  if (v.reason) {
+    const box = document.createElement('div');
+    box.className = 'err__reason';
+    const t = document.createElement('p');
+    t.className = 'err__reason-title';
+    t.textContent = v.reason.title;
+    const d = document.createElement('p');
+    d.className = 'err__reason-body';
+    d.textContent = v.reason.body;
+    box.append(t, d);
+    root.append(box);
   }
 
   for (const name of v.buttons) {

@@ -9,14 +9,17 @@ const { DONE, ERROR, STOPPED, MEASURING } = HRV_STATES;
 assert.equal(pickView(MEASURING), null);
 assert.equal(pickView(DONE, { measurement: { retryRequired: false } }), null);
 
-// B3-9 — 사유별 문구, LOW_FPS 포함 4종이 다 있어야 한다
+// B3-9 — 해당 사유 1개만. LOW_FPS 포함 4종이 서로 다른 문구를 가져야 한다
+const texts = new Set();
 for (const reason of ['NO_PULSE', 'TOO_NOISY', 'TOO_SHORT', 'LOW_FPS']) {
   const v = pickView(DONE, { measurement: { retryRequired: true, retryReason: reason } });
   assert.equal(v.view, 'RETRY');
-  assert.equal(v.highlight, reason, `${reason} 문구 없음`);
+  assert.ok(v.reason?.title, `${reason} 문구 없음`);
+  texts.add(v.reason.title);
 }
-// 모르는 사유가 와도 화면은 떠야 한다
-assert.equal(pickView(DONE, { measurement: { retryRequired: true, retryReason: 'WAT' } }).highlight, null);
+assert.equal(texts.size, 4, '사유마다 다른 문구여야 한다');
+// 모르는 사유가 와도 빈 화면이 되면 안 된다
+assert.ok(pickView(DONE, { measurement: { retryRequired: true, retryReason: 'WAT' } }).reason.title);
 
 assert.equal(pickView(STOPPED).view, 'STOPPED');
 assert.equal(pickView(ERROR, { type: HRV_ERRORS.PERMISSION_DENIED }).view, 'PERMISSION');

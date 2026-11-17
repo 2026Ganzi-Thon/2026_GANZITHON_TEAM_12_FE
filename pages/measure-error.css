@@ -6,14 +6,13 @@
 .err__title { font-family: var(--cd-font-title); font-size: var(--cd-text-title); font-weight: 700; margin: 0; }
 .err__body  { font-size: var(--cd-text-body); line-height: 1.6; color: var(--cd-ink-mute); white-space: pre-line; margin: 0; }
 
-.err__reasons {
-  display: grid; gap: var(--cd-space-1); margin: 0; text-align: left;
-  padding: var(--cd-space-3); border: 1px dashed var(--cd-line); border-radius: var(--cd-radius);
+/* 해당하는 재측정 사유 1개 */
+.err__reason {
+  padding: var(--cd-space-3); border-radius: var(--cd-radius);
+  background: var(--cd-surface); border: 1px solid var(--cd-line);
 }
-.err__reasons dt { font-size: var(--cd-text-body); font-weight: 600; }
-.err__reasons dt.is-current { color: var(--cd-warn-ink); }        /* 이번 재측정 사유 */
-.err__reasons dt.is-current::before { content: '● '; }
-.err__reasons dd { margin: 0 0 var(--cd-space-2); font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }
+.err__reason-title { margin: 0 0 var(--cd-space-1); font-size: var(--cd-text-body); font-weight: 600; }
+.err__reason-body  { margin: 0; font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }
 
 .err__btn {
   min-height: var(--cd-tap-min); border: 0; border-radius: var(--cd-radius);
