@@ -25,6 +25,7 @@
   --cd-chip-line:     #C7D8C4;
   --cd-chip-ink:      #3D5A47;
 
+  --cd-warn-bg:       #FDF0E9; /* 주의 배너 바탕 */
   --cd-warn-ink:      #D9755F; /* 경고 아이콘·강조 */
   --cd-toast-bg:      #24382F; /* 상단 토스트 바탕 */
   --cd-line:          #E7E0D3; /* 테두리·구분선 */

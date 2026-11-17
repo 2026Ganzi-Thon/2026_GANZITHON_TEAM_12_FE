@@ -38,7 +38,7 @@
 <div id="log"></div>
 
 <script type="module">
-import { renderError } from './measure-error.js';
+import { renderError, IDLE } from './measure-error.js';
 import { HRV_STATES as S, HRV_ERRORS as E } from '../hrvMeasurement.js';
 
 const CASES = {
@@ -47,6 +47,9 @@ const CASES = {
   'B3-9 끊김':      [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_SHORT' } }],
   'B3-9 느림':      [S.DONE, { measurement: { retryRequired: true, retryReason: 'LOW_FPS' } }],
   'B3-2 중단':      [S.STOPPED, undefined],
+  'E3 손가락대기':  [S.WAITING_FINGER, undefined],
+  'E4 플래시없음':  [IDLE, { torch: false }],
+  'B3-1 시작전':    [IDLE, { torch: true }],
   'E1 권한':        [S.ERROR, { type: E.PERMISSION_DENIED }],
   'E2 미지원':      [S.ERROR, { type: E.NO_CAMERA }],
   'E2 http':        [S.ERROR, { type: E.INSECURE_CONTEXT }],

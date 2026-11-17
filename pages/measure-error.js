@@ -1,5 +1,8 @@
 /**
- * B3 측정 — 예외·중단·재측정 화면 (B3-2, B3-9, E1, E2, E5)
+ * B3 측정 — B가 맡은 화면 (B3-9, E1~E5, B3-2 토스트)
+ *
+ * 이름은 error지만 E3(손가락 대기)·E4(측정 시작)처럼 정상 상태 화면도 들어 있다.
+ * A의 measure.js가 import 중이라 파일명은 그대로 둔다.
  *
  * 접점은 pickView/renderError 둘뿐. 정상 플로우(measure.js)는 이 파일을 고치지 않는다.
  * 상태는 hrvMeasurement.js의 HRV_STATES / HRV_ERRORS, 서버 코드는 docs/API.md 0절·6절.
@@ -8,6 +11,9 @@
 import { HRV_STATES, HRV_ERRORS } from '../hrvMeasurement.js';
 
 const ICON = '../assets/icons';
+
+/** 측정 시작 전(E4/B3-1). 엔진이 아직 안 돌 때라 HRV_STATES에 없는 화면 전용 상태다. */
+export const IDLE = 'IDLE';
 
 // B3-9 카드 — 해당하는 사유 1개만 보여준다
 // ("와이어프레임 수정 요청사항 2" 2장: 시안의 "사유별 문구" 목록은 설명용 주석이라 삭제).
@@ -64,7 +70,37 @@ export function pickView(state, detail) {
     return { view: 'STOPPED', chrome: 'full', toast: '측정이 중단됐어요. 다시 시작해주세요', buttons: [] };
   }
 
-  if (state !== HRV_STATES.ERROR) return null; // 정상 상태 → measure.js 담당
+  // E3 — 손가락 대기. 정상 상태지만 화면은 B가 그린다.
+  if (state === HRV_STATES.WAITING_FINGER) {
+    return {
+      view: 'WAITING', chrome: 'steps',
+      camera: { chip: '감지 대기 중', placeholder: ['카메라 화면', '(손가락 없음)'] },
+      title: '손가락을 대주세요',
+      body: ['카메라와 플래시를 함께 덮으면', '자동으로 시작해요'],
+      tip: {
+        title: '이렇게 하면 잘 인식돼요',
+        lines: ['손가락 전체로 렌즈와 플래시를 덮고, 인식될 때까지 그대로 유지해 주세요.'],
+      },
+      buttons: [{ action: 'stop', label: '중단', kind: 'ghost' }],
+    };
+  }
+
+  // E4 / B3-1 — 측정 시작 전. 같은 화면이고 플래시를 못 켜는 기기에만 배너가 붙는다
+  // ("수정 요청사항 2" 2장: "(플래시를 켤 수 없는 기기만)" 괄호는 주석이라 삭제).
+  if (state === IDLE) {
+    return {
+      view: 'START', chrome: 'full',
+      banner: detail?.torch === false ? {
+        title: '밝은 곳에서 측정해주세요',
+        lines: ['이 기기는 플래시를 켤 수 없어요. 밝은 창가나 조명 아래에서 재면 더 정확해요.'],
+      } : null,
+      figure: '후면 카메라를 손가락 끝으로 가볍게 덮어요',
+      bullets: ['세게 누르지 말고 가볍게 대주세요', '1분 동안 편하게 앉아 움직이지 마세요'],
+      buttons: [{ action: 'start', label: '측정 시작', kind: 'primary' }],
+    };
+  }
+
+  if (state !== HRV_STATES.ERROR) return null; // 그 밖의 정상 상태 → measure.js 담당
 
   const error = detail?.type ?? detail;
 
@@ -181,7 +217,36 @@ export function renderError(root, state, detail, actions = {}) {
     root.append(ring);
   }
 
-  root.append(el('h2', 'err__title', v.title));
+  // E4 상단 배너 (플래시 불가 기기)
+  if (v.banner) {
+    const b = el('div', 'err__banner');
+    const texts = el('div');
+    texts.append(el('p', 'err__banner-title', v.banner.title));
+    for (const line of v.banner.lines) texts.append(el('p', 'err__banner-body', line));
+    b.append(img('warn-sun.svg', 11, 15), texts);
+    root.append(b);
+  }
+
+  // E3 카메라 영역 — 실제 영상은 A가 .err__camera 안으로 <video>를 옮겨 넣는다
+  if (v.camera) {
+    const cam = el('div', 'err__camera');
+    const chip = el('span', 'err__chip');
+    chip.append(el('span', 'err__chip-dot'), el('span', null, v.camera.chip));
+    const ph = el('div', 'err__camera-ph');
+    ph.append(img('camera-sm.svg', 16, 16));
+    for (const line of v.camera.placeholder) ph.append(el('p', null, line));
+    cam.append(chip, ph);
+    root.append(cam);
+  }
+
+  // E4 그림 자리
+  if (v.figure) {
+    const f = el('div', 'err__figure');
+    f.append(img('camera-md.svg', 22, 22), el('p', null, v.figure));
+    root.append(f);
+  }
+
+  if (v.title) root.append(el('h2', 'err__title', v.title));
 
   for (const line of v.body ?? []) root.append(el('p', 'err__body', line));
 
@@ -192,6 +257,25 @@ export function renderError(root, state, detail, actions = {}) {
     box.append(img(v.card.icon, 26, 26));
     card.append(box, el('p', 'err__card-guide', v.card.guide), el('p', 'err__card-reason', v.card.reason));
     root.append(card);
+  }
+
+  // E3 도움말 카드
+  if (v.tip) {
+    const t = el('div', 'err__tip');
+    const icon = el('div', 'err__tip-icon');
+    icon.append(img('bulb.svg', 9, 12));
+    const body = el('div');
+    body.append(el('p', 'err__tip-title', v.tip.title));
+    for (const line of v.tip.lines) body.append(el('p', 'err__tip-body', line));
+    t.append(icon, body);
+    root.append(t);
+  }
+
+  // E4 주의사항
+  if (v.bullets) {
+    const ul = el('ul', 'err__bullets');
+    for (const line of v.bullets) ul.append(el('li', null, line));
+    root.append(ul);
   }
 
   // E1 안내 카드

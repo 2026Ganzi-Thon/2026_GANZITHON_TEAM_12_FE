@@ -1,6 +1,6 @@
 // node pages/measure-error.test.js — 분기만 확인한다 (DOM 없음)
 import assert from 'node:assert/strict';
-import { pickView } from './measure-error.js';
+import { pickView, IDLE } from './measure-error.js';
 import { HRV_STATES, HRV_ERRORS } from '../hrvMeasurement.js';
 
 const { DONE, ERROR, STOPPED, MEASURING } = HRV_STATES;
@@ -45,6 +45,20 @@ assert.equal(pickView(ERROR, { type: HRV_ERRORS.AUTH_REQUIRED }).goto, 'login');
 
 // 모르는 오류도 막다른 길이 되면 안 된다
 assert.equal(pickView(ERROR, { type: 'SOMETHING_NEW' }).view, 'UNKNOWN');
+
+// E3 — 손가락 대기는 정상 상태지만 B가 그린다
+const waiting = pickView(HRV_STATES.WAITING_FINGER);
+assert.equal(waiting.view, 'WAITING');
+assert.ok(waiting.camera);
+
+// E4 — 플래시를 켤 수 있으면 배너가 없어야 한다
+assert.equal(pickView(IDLE, { torch: true }).banner, null);
+assert.ok(pickView(IDLE, { torch: false }).banner);
+// 아직 모르는 단계(측정 전 조회 안 됨)에서도 배너를 함부로 띄우지 않는다
+assert.equal(pickView(IDLE).banner, null);
+
+// 상태 없이 불러도 화면을 만들지 않는다
+assert.equal(pickView(undefined), null);
 
 // 모든 화면이 버튼과 제목을 갖는다
 for (const v of [stopped, pickView(ERROR, { type: HRV_ERRORS.NO_CAMERA }), pickView(ERROR, { type: 'SOMETHING_NEW' })]) {
