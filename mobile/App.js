@@ -1,20 +1,27 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import OnboardingNavigator from './src/navigation/OnboardingNavigator';
+import MainTabNavigator from './src/navigation/MainTabNavigator';
 
 export default function App() {
+  const [isOnboardingDone, setIsOnboardingDone] = useState(false);
+
+  if (isOnboardingDone) {
+    return (
+      <MainTabNavigator
+        onOpenSafety={() => {
+          // 추후 C3 안전 안내 화면 연결
+        }}
+        onBackToOnboarding={() => setIsOnboardingDone(false)}
+      />
+    );
+  }
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.js to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <OnboardingNavigator
+      onCompleteOnboarding={() => setIsOnboardingDone(true)}
+      onOpenSafety={() => {
+        // 추후 C3 안전 안내 화면 연결
+      }}
+    />
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
