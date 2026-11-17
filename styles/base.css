@@ -1,0 +1,50 @@
+/* Come & Down 공용 토큰. 프론트 둘이 같이 쓰는 파일 — 바꾸기 전에 서로 말한다.
+   색은 와이어프레임 디자인 시안에서 뽑았다. (추정) 표시는 시안에 단독으로 안 나와 확인이 필요한 값. */
+:root {
+  /* 면 */
+  --cd-bg:           #FBF7EF; /* 페이지 배경 (크림) */
+  --cd-surface:      #FFFFFF; /* 카드 */
+  --cd-surface-mute: #EDEBE6; /* 비활성 면 — 카메라 영역, 그림 자리 */
+
+  /* 글자 */
+  --cd-ink:          #1B3A2A; /* 제목·본문 (딥그린) */
+  --cd-ink-mute:     #6B7A70; /* 보조 설명 (추정) */
+
+  /* 강조 */
+  --cd-accent:       #1B3A2A; /* 기본 버튼 바탕 — 지금은 ink와 같지만 역할이 달라 따로 둔다 */
+  --cd-on-accent:    #FBF7EF; /* 강조 위 글자 */
+  --cd-accent-soft:  #EEF3EC; /* 연녹 면 — 팁 박스, 상태 칩 */
+  --cd-accent-ring:  #E4EDE0; /* 연녹 원형 아이콘 배경 */
+
+  /* 주의 */
+  --cd-warn:         #FDF0E9; /* 경고 배너 바탕 */
+  --cd-warn-ink:     #D97757; /* 경고 글자·아이콘 */
+
+  --cd-line:         #E4E0D8; /* 테두리·구분선 (추정) */
+
+  /* 글꼴 — 대표 폰트 프레임 기준. 본문은 시안이 시스템 산세리프로 보여 fallback을 넉넉히 둔다. */
+  --cd-font-display: 'Cafe24 Decobox', system-ui, sans-serif;      /* 로고·큰 제목 */
+  --cd-font-title:   'Cafe24 PRO Slim Fit', system-ui, sans-serif; /* 부제목 */
+  --cd-font-body:    'Cafe24 PRO Slim Air', system-ui, sans-serif; /* 세부 내용 */
+
+  --cd-text-title:   20px;
+  --cd-text-body:    14px;
+  --cd-text-caption: 13px;
+
+  /* 간격·모양 */
+  --cd-space-1: 4px;
+  --cd-space-2: 8px;
+  --cd-space-3: 16px;
+  --cd-space-4: 24px;
+  --cd-radius:  12px;
+  --cd-tap-min: 52px; /* 버튼 최소 높이 */
+}
+
+body {
+  margin: 0;
+  background: var(--cd-bg);
+  color: var(--cd-ink);
+  font-family: var(--cd-font-body);
+  font-size: var(--cd-text-body);
+  word-break: keep-all;
+}
