@@ -1,0 +1,52 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=390, initial-scale=1">
+<title>예외 화면 확인용</title>
+<!-- measure.js 없이 내 화면만 띄운다. npx vite → /pages/measure-error.dev.html -->
+<link rel="stylesheet" href="./measure-error.css">
+<style>
+  body { margin: 0; font-family: system-ui, sans-serif; }
+  #bar { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: #eee; }
+  #bar button { font-size: 12px; padding: 4px 8px; }
+  #state { width: 390px; min-height: 600px; border: 1px solid #ccc; margin: 8px; }
+  #log { padding: 8px; font: 12px/1.6 monospace; color: #555; }
+</style>
+<div id="bar"></div>
+<div id="state"></div>
+<div id="log"></div>
+
+<script type="module">
+import { renderError } from './measure-error.js';
+import { HRV_STATES as S, HRV_ERRORS as E } from '../hrvMeasurement.js';
+
+const CASES = {
+  'B3-9 NO_PULSE':  [S.DONE, { measurement: { retryRequired: true, retryReason: 'NO_PULSE' } }],
+  'B3-9 TOO_NOISY': [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_NOISY' } }],
+  'B3-9 TOO_SHORT': [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_SHORT' } }],
+  'B3-9 LOW_FPS':   [S.DONE, { measurement: { retryRequired: true, retryReason: 'LOW_FPS' } }],
+  'B3-2 중단':      [S.STOPPED, undefined],
+  'E1 권한':        [S.ERROR, { type: E.PERMISSION_DENIED }],
+  'E2 미지원':      [S.ERROR, { type: E.NO_CAMERA }],
+  'E2 http':        [S.ERROR, { type: E.INSECURE_CONTEXT }],
+  'E5 전송실패':    [S.ERROR, { type: E.UPLOAD_FAILED }],
+  'E5 400':         [S.ERROR, { type: E.INVALID_DATA }],
+  '403 동의':       [S.ERROR, { type: E.AUTH_REQUIRED, code: 'HRV_CONSENT_REQUIRED' }],
+  '403 측정꺼짐':   [S.ERROR, { type: E.AUTH_REQUIRED, code: 'HRV_DISABLED' }],
+  '401':            [S.ERROR, { type: E.AUTH_REQUIRED }],
+  '모르는 오류':    [S.ERROR, { type: 'SOMETHING_NEW' }],
+};
+
+const log = document.getElementById('log');
+const actions = new Proxy({}, { get: (_, name) => (arg) => { log.textContent = `${name}(${arg ?? ''}) 눌림`; } });
+
+for (const [label, [state, detail]] of Object.entries(CASES)) {
+  const b = document.createElement('button');
+  b.textContent = label;
+  b.onclick = () => {
+    log.textContent = '';
+    const drawn = renderError(document.getElementById('state'), state, detail, actions);
+    if (!drawn) log.textContent = '내 화면 아님 → measure.js 담당';
+  };
+  document.getElementById('bar').append(b);
+}
+</script>
