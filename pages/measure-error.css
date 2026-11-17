@@ -1,13 +1,26 @@
-/* B3-2, B3-9, E1, E2, E5 — measure-error.js 전용.
-   색·글자 토큰은 styles/base.css 합의 뒤 var()로 바꾼다. 지금은 배치만. */
-#state[data-view] { display: flex; flex-direction: column; gap: 16px; padding: 24px 20px; text-align: center; }
-.err__title { font-size: 20px; font-weight: 700; }
-.err__body  { font-size: 14px; line-height: 1.6; white-space: pre-line; }
+/* B3-2, B3-9, E1, E2, E5 — measure-error.js 전용. 토큰은 styles/base.css */
+#state[data-view] {
+  display: flex; flex-direction: column; gap: var(--cd-space-3);
+  padding: var(--cd-space-4) 20px; text-align: center;
+}
+.err__title { font-family: var(--cd-font-title); font-size: var(--cd-text-title); font-weight: 700; margin: 0; }
+.err__body  { font-size: var(--cd-text-body); line-height: 1.6; color: var(--cd-ink-mute); white-space: pre-line; margin: 0; }
 
-.err__reasons { display: grid; gap: 4px; padding: 16px; border: 1px dashed currentColor; border-radius: 12px; text-align: left; }
-.err__reasons dt { font-size: 14px; font-weight: 600; }
-.err__reasons dt.is-current::before { content: '● '; }   /* 이번 재측정 사유 */
-.err__reasons dd { margin: 0 0 8px; font-size: 13px; opacity: .75; }
+.err__reasons {
+  display: grid; gap: var(--cd-space-1); margin: 0; text-align: left;
+  padding: var(--cd-space-3); border: 1px dashed var(--cd-line); border-radius: var(--cd-radius);
+}
+.err__reasons dt { font-size: var(--cd-text-body); font-weight: 600; }
+.err__reasons dt.is-current { color: var(--cd-warn-ink); }        /* 이번 재측정 사유 */
+.err__reasons dt.is-current::before { content: '● '; }
+.err__reasons dd { margin: 0 0 var(--cd-space-2); font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }
 
-.err__btn { min-height: 52px; border-radius: 12px; border: 0; font-size: 16px; font-weight: 600; }
-.err__btn--skipToday, .err__btn--home, .err__btn--restart:not(:first-of-type) { background: none; border: 1px solid currentColor; }
+.err__btn {
+  min-height: var(--cd-tap-min); border: 0; border-radius: var(--cd-radius);
+  background: var(--cd-accent); color: var(--cd-on-accent);
+  font-family: var(--cd-font-title); font-size: 16px; font-weight: 600;
+}
+/* 보조 동작은 외곽선만 */
+.err__btn--skipToday, .err__btn--home, .err__btn--restart:not(:first-of-type) {
+  background: var(--cd-surface); color: var(--cd-ink); border: 1px solid var(--cd-line);
+}
