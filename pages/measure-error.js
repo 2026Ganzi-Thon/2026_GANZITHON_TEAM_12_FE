@@ -6,10 +6,12 @@
  */
 import { HRV_STATES, HRV_ERRORS } from '../hrvMeasurement.js';
 
-// B3-9 사유별 문구. 해당하는 사유 1개만 보여준다 (시안의 "사유별 문구" 목록은 설명용 메모).
-// 문구는 임시다 — 노션 "와이어프레임 수정 요청사항 2" 확정본으로 교체한다.
+// B3-9 사유별 문구. 해당하는 사유 1개만 보여준다
+// ("와이어프레임 수정 요청사항 2" 2장: "사유별 문구" 목록은 설명용 주석이므로 삭제).
+// 손가락 안내 문구는 같은 문서 3장의 통일 문구를 쓴다.
+// LOW_FPS 문구는 아직 시안에 없어 임시다(사유 4개, 시안 3개).
 const RETRY_REASONS = {
-  NO_PULSE:  { title: '맥박이 안 잡힘',   body: '손가락으로 카메라와 플래시를 함께 덮어주세요' },
+  NO_PULSE:  { title: '맥박이 안 잡힘',   body: '손가락 끝으로 카메라와 플래시를 함께 가볍게 덮어요' },
   TOO_NOISY: { title: '잡음·움직임이 큼', body: '움직이지 말고 손을 편하게 둔 채 다시 측정해주세요' },
   TOO_SHORT: { title: '측정이 끊김',     body: '측정이 중간에 끊겼어요. 다시 측정해주세요' },
   LOW_FPS:   { title: '화면이 느렸어요',  body: '다른 앱을 닫고 다시 측정해주세요' },
@@ -36,7 +38,7 @@ export function pickView(state, detail) {
     return {
       view: 'RETRY',
       title: '다시 측정이 필요해요',
-      body: '손가락으로 카메라와 플래시를 함께 덮어주세요',
+      body: '손가락 끝으로 카메라와 플래시를 함께 가볍게 덮어요',
       reason: RETRY_REASONS[detail.measurement.retryReason] ?? UNKNOWN_REASON,
       buttons: ['restart', 'skipToday'],
     };
