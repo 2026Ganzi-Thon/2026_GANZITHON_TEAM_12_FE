@@ -1,0 +1,20 @@
+/* 공용 셸 레이아웃 (measure.html). 화면 안쪽은 각자 파일에서. */
+.m-head { display: flex; align-items: center; justify-content: space-between; height: 56px; padding: 0 var(--cd-space-5); }
+.m-head__back { display: flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; background: none; cursor: pointer; }
+.m-head__pad  { width: 44px; }
+.m-head__brand { display: flex; align-items: center; gap: 6px; font-size: 15px; font-weight: 600; letter-spacing: -.025em; }
+
+.m-steps { padding: var(--cd-space-1) var(--cd-space-5) 13px; border-bottom: 1px solid var(--cd-line); }
+.m-steps ol { display: flex; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; font-size: var(--cd-text-label); color: var(--cd-ink-faint); }
+.m-steps [aria-current="step"] { color: var(--cd-ink); font-weight: 700; border-bottom: 2px solid var(--cd-ink); padding-bottom: 2px; }
+
+.m-main { flex: 1; min-height: 0; }
+
+.m-tabs { display: flex; height: 68px; border-top: 1px solid var(--cd-line); background: var(--cd-surface); }
+.m-tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--cd-space-1); font-size: var(--cd-text-label); color: var(--cd-ink-faint); text-decoration: none; }
+.m-tabs [aria-current="page"] { color: var(--cd-ink); font-weight: 600; }
+
+/* E1·E2처럼 단독으로 서는 화면 */
+body[data-chrome="none"] .m-head,
+body[data-chrome="none"] .m-steps,
+body[data-chrome="none"] .m-tabs { display: none; }

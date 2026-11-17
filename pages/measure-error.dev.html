@@ -2,18 +2,39 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=390, initial-scale=1">
 <title>예외 화면 확인용</title>
-<!-- measure.js 없이 내 화면만 띄운다. npx vite → /pages/measure-error.dev.html -->
+<!-- measure.js 없이 내 화면만 띄운다. npx vite → /pages/measure-error.dev.html
+     셸(measure.html)과 같은 구조라 머리말·단계·탭이 붙은 모습 그대로 보인다. -->
 <link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="./measure.css">
 <link rel="stylesheet" href="./measure-error.css">
 <style>
-  body { margin: 0; font-family: system-ui, sans-serif; }
-  #bar { display: flex; flex-wrap: wrap; gap: 4px; padding: 8px; background: #eee; }
-  #bar button { font-size: 12px; padding: 4px 8px; }
-  #state { width: 390px; min-height: 600px; border: 1px solid #ccc; margin: 8px; }
-  #log { padding: 8px; font: 12px/1.6 monospace; color: #555; }
+  body { width: 390px; height: 844px; margin: 24px auto; box-shadow: 0 0 0 1px #ddd; }
+  #bar { position: fixed; top: 0; left: 0; right: 0; display: flex; flex-wrap: wrap; gap: 3px; padding: 6px; background: #222; z-index: 9; }
+  #bar button { font-size: 11px; padding: 3px 6px; }
+  #log { position: fixed; bottom: 0; left: 0; padding: 4px 8px; font: 11px monospace; background: #222; color: #9f9; }
 </style>
 <div id="bar"></div>
-<div id="state"></div>
+
+<header class="m-head">
+  <button type="button" class="m-head__back" aria-label="뒤로"><img src="../assets/icons/back.svg" width="10" height="16" alt=""></button>
+  <span class="m-head__brand"><img src="../assets/icons/logo.svg" width="20" height="20" alt="">Come &amp; down</span>
+  <span class="m-head__pad"></span>
+</header>
+<div class="m-toast" id="toast" role="status" hidden></div>
+<nav class="m-steps" aria-label="측정 단계">
+  <ol>
+    <li aria-current="step">1. 손가락 측정</li><li aria-hidden="true">→</li>
+    <li>2. 컨디션 체크</li><li aria-hidden="true">→</li><li>3. 천천히 숨쉬기</li>
+  </ol>
+</nav>
+<main class="m-main"><div id="state" role="status"></div></main>
+<nav class="m-tabs" aria-label="메뉴">
+  <a href="#"><img src="../assets/icons/tab-home.svg" width="19" height="17" alt="">홈</a>
+  <a href="#"><img src="../assets/icons/tab-calendar.svg" width="15" height="17" alt="">캘린더</a>
+  <a href="#" aria-current="page"><img src="../assets/icons/tab-measure.svg" width="17" height="17" alt="">측정</a>
+  <a href="#"><img src="../assets/icons/tab-report.svg" width="15" height="17" alt="">리포트</a>
+  <a href="#"><img src="../assets/icons/tab-my.svg" width="15" height="17" alt="">MY</a>
+</nav>
 <div id="log"></div>
 
 <script type="module">
@@ -21,10 +42,10 @@ import { renderError } from './measure-error.js';
 import { HRV_STATES as S, HRV_ERRORS as E } from '../hrvMeasurement.js';
 
 const CASES = {
-  'B3-9 NO_PULSE':  [S.DONE, { measurement: { retryRequired: true, retryReason: 'NO_PULSE' } }],
-  'B3-9 TOO_NOISY': [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_NOISY' } }],
-  'B3-9 TOO_SHORT': [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_SHORT' } }],
-  'B3-9 LOW_FPS':   [S.DONE, { measurement: { retryRequired: true, retryReason: 'LOW_FPS' } }],
+  'B3-9 맥박없음':  [S.DONE, { measurement: { retryRequired: true, retryReason: 'NO_PULSE' } }],
+  'B3-9 잡음':      [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_NOISY' } }],
+  'B3-9 끊김':      [S.DONE, { measurement: { retryRequired: true, retryReason: 'TOO_SHORT' } }],
+  'B3-9 느림':      [S.DONE, { measurement: { retryRequired: true, retryReason: 'LOW_FPS' } }],
   'B3-2 중단':      [S.STOPPED, undefined],
   'E1 권한':        [S.ERROR, { type: E.PERMISSION_DENIED }],
   'E2 미지원':      [S.ERROR, { type: E.NO_CAMERA }],
@@ -35,19 +56,25 @@ const CASES = {
   '403 측정꺼짐':   [S.ERROR, { type: E.AUTH_REQUIRED, code: 'HRV_DISABLED' }],
   '401':            [S.ERROR, { type: E.AUTH_REQUIRED }],
   '모르는 오류':    [S.ERROR, { type: 'SOMETHING_NEW' }],
+  '(정상 상태)':    [S.MEASURING, undefined],
 };
 
 const log = document.getElementById('log');
-const actions = new Proxy({}, { get: (_, name) => (arg) => { log.textContent = `${name}(${arg ?? ''}) 눌림`; } });
+const state = document.getElementById('state');
+const actions = new Proxy({}, { get: (_, name) => (arg) => { log.textContent = `${name}(${arg ?? ''})`; } });
 
-for (const [label, [state, detail]] of Object.entries(CASES)) {
+function show(label) {
+  const [s, d] = CASES[label];
+  state.replaceChildren(); delete state.dataset.view;
+  const drawn = renderError(state, s, d, actions);
+  log.textContent = drawn ? label : `${label} → measure.js 담당 (여긴 안 그림)`;
+  location.hash = encodeURIComponent(label);
+}
+for (const label of Object.keys(CASES)) {
   const b = document.createElement('button');
   b.textContent = label;
-  b.onclick = () => {
-    log.textContent = '';
-    const drawn = renderError(document.getElementById('state'), state, detail, actions);
-    if (!drawn) log.textContent = '내 화면 아님 → measure.js 담당';
-  };
+  b.onclick = () => show(label);
   document.getElementById('bar').append(b);
 }
+show(decodeURIComponent(location.hash.slice(1)) in CASES ? decodeURIComponent(location.hash.slice(1)) : 'B3-9 맥박없음');
 </script>

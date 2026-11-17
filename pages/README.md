@@ -28,6 +28,10 @@ onStateChange(state, payload, detail) {
 
 `actions`는 `{ restart, skipToday, retryUpload, home, goto }`. 화면 전환은 A가 쥐고 있으므로 A가 넘긴다.
 
+셸과의 약속 두 가지:
+- `renderError`가 `body[data-chrome]`을 `full`/`none`으로 바꾼다. `none`이면 머리말·단계·탭이 숨는다(E1·E2처럼 단독으로 서는 화면).
+- B3-2(측정 중단)는 전체 화면이 아니라 **시작 화면 위에 얹는 토스트**다. 이때만 `renderError`가 `#toast`를 채우고 `false`를 돌려주므로, A는 평소대로 시작 화면을 그리면 된다.
+
 ## 공용 파일 — 바꾸기 전에 서로 말한다
 
 - `pages/measure.html` — 셸. `#state`가 공유 지점
