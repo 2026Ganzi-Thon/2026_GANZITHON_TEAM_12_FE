@@ -18,3 +18,16 @@
 body[data-chrome="none"] .m-head,
 body[data-chrome="none"] .m-steps,
 body[data-chrome="none"] .m-tabs { display: none; }
+
+/* shell.js가 만드는 요소 */
+.m-head__title { margin: 0; font-size: var(--cd-text-display); font-weight: 700; flex: 1; }
+.m-head__back + .m-head__title { margin-left: var(--cd-space-2); }
+.m-chip {
+  display: inline-flex; align-items: center; gap: var(--cd-space-1);
+  padding: 7px 12px; border-radius: 999px;
+  background: var(--cd-chip-bg); border: 1px solid var(--cd-chip-line);
+  font-size: var(--cd-text-label); color: var(--cd-chip-ink); white-space: nowrap;
+}
+.m-chip b { color: var(--cd-ink); }
+.m-steps .is-done { color: var(--cd-ink-mute); }
+.m-steps .is-current { color: var(--cd-ink); font-weight: 700; border-bottom: 2px solid var(--cd-ink); padding-bottom: 2px; }

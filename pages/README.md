@@ -36,6 +36,21 @@ onStateChange(state, payload, detail) {
 - `renderError`가 `body[data-chrome]`을 `full`/`none`으로 바꾼다. `none`이면 머리말·단계·탭이 숨는다(E1·E2처럼 단독으로 서는 화면).
 - B3-2(측정 중단)는 전체 화면이 아니라 **시작 화면 위에 얹는 토스트**다. 이때만 `renderError`가 `#toast`를 채우고 `false`를 돌려주므로, A는 평소대로 시작 화면을 그리면 된다.
 
+## 파일
+
+| 파일 | 화면 |
+|---|---|
+| `measure-error.js/css` | B3-9 · E1~E5 · B3-2 토스트 |
+| `condition.html/js` | B4 컨디션 체크 |
+| `breathing.html/js` | B5 천천히 숨쉬기 |
+| `checkin.css` | B4·B5 공용 |
+| `shell.js` | 머리말·단계 표시·하단 탭. 페이지마다 복사하지 않으려고 모듈로 둔다 |
+| `api.js` | `api(path, {method, body})` — CSRF 헤더·쿠키·오류 코드 처리 (API.md 0절) |
+
+아침 체크 흐름: `measure.html` → `condition.html` → `breathing.html` → `result.html`.
+컨디션 저장 응답(TodayResult)을 `sessionStorage.todayResult`에 넣고 결과 화면이 그대로 쓴다.
+호흡은 건너뛸 수 있어 결과 계산은 컨디션 저장 시점이다.
+
 ## 공용 파일 — 바꾸기 전에 서로 말한다
 
 - `pages/measure.html` — 셸. `#state`가 공유 지점
