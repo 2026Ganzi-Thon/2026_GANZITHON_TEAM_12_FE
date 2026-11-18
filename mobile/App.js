@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Platform, Text, TextInput } from 'react-native';
 import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
+import ExtraTabs from './src/navigation/ExtraTabs';
+import SafetyScreen from './src/screens/safety/SafetyScreen';
 
 function injectWebFonts() {
   if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -56,18 +58,30 @@ applyGlobalTextFont();
 
 export default function App() {
   const [isOnboardingDone, setIsOnboardingDone] = useState(false);
+  // C3 안전 안내는 온보딩·메인 어디서든 위에 덮어 띄운다
+  const [safetyOpen, setSafetyOpen] = useState(false);
 
   useEffect(() => {
     injectWebFonts();
   }, []);
 
+  if (safetyOpen) {
+    return <SafetyScreen onBack={() => setSafetyOpen(false)} />;
+  }
+
   if (isOnboardingDone) {
     return (
       <MainTabNavigator
-        onOpenSafety={() => {
-          // 추후 C3 안전 안내 화면 연결
-        }}
+        onOpenSafety={() => setSafetyOpen(true)}
         onBackToOnboarding={() => setIsOnboardingDone(false)}
+        renderExtraTabs={(activeTab, setActiveTab) => (
+          <ExtraTabs
+            activeTab={activeTab}
+            setActiveTab={setActiveTab}
+            onOpenSafety={() => setSafetyOpen(true)}
+            onLoggedOut={() => setIsOnboardingDone(false)}
+          />
+        )}
       />
     );
   }
@@ -75,9 +89,7 @@ export default function App() {
   return (
     <OnboardingNavigator
       onCompleteOnboarding={() => setIsOnboardingDone(true)}
-      onOpenSafety={() => {
-        // 추후 C3 안전 안내 화면 연결
-      }}
+      onOpenSafety={() => setSafetyOpen(true)}
     />
   );
 }
