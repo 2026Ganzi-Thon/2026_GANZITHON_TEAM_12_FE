@@ -15,14 +15,12 @@ import { apiRequest } from '../../api/client';
 
 // 백엔드 등록 표준 활동 코드 매핑
 const PRESET_ACTIVITIES = [
-  { code: 'WALK', label: '산책' },
+  { code: 'WALK', label: '걷기' },
   { code: 'STRETCH', label: '스트레칭' },
-  { code: 'MUSIC', label: '음악 듣기' },
-  { code: 'READING', label: '독서' },
+  { code: 'NAP', label: '낮잠' },
+  { code: 'YOGA', label: '요가' },
   { code: 'MEDITATION', label: '명상' },
-  { code: 'JOURNALING', label: '일기 쓰기' },
-  { code: 'BATH', label: '반신욕' },
-  { code: 'JOGGING', label: '가벼운 조깅' },
+  { code: 'LIGHT_RUN', label: '가벼운 러닝' },
 ];
 
 function formatWakeTimeKorean(minutesFromMidnight) {
@@ -51,7 +49,7 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
   // 기본값: 기상 07:00 (420분), 최소 수면 7시간 30분 (450분)
   const [wakeMinutes, setWakeMinutes] = useState(420);
   const [sleepDurationMinutes, setSleepDurationMinutes] = useState(450);
-  const [selectedCodes, setSelectedCodes] = useState(['WALK', 'STRETCH', 'MUSIC']);
+  const [selectedCodes, setSelectedCodes] = useState(['WALK', 'STRETCH', 'MEDITATION']);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customKeyword, setCustomKeyword] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -225,13 +223,6 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
                 </TouchableOpacity>
               );
             })}
-
-            <TouchableOpacity
-              style={[styles.chip, styles.chipAddTrigger]}
-              onPress={() => setShowCustomInput((v) => !v)}
-            >
-              <Text style={styles.chipText}>+ 직접 추가</Text>
-            </TouchableOpacity>
           </View>
 
           {showCustomInput && (
