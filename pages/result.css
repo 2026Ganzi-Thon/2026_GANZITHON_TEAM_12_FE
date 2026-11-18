@@ -70,3 +70,13 @@
 
 .rs-home { min-height: 48px; margin-top: var(--cd-space-2); }
 .rs-empty { margin: var(--cd-space-6) 0; font-size: var(--cd-text-body); color: var(--cd-ink-mute); text-align: center; }
+
+/* 409 SLOT_CONFLICT 후 다른 시간 보기 */
+.rs-slots { display: flex; flex-direction: column; gap: var(--cd-space-2); }
+.rs-slots__title { margin: 0; font-size: var(--cd-text-caption); font-weight: 600; color: var(--cd-ink-mute); }
+.rs-slots__item {
+  min-height: 44px; padding: 0 14px; text-align: left;
+  background: var(--cd-surface); border: 1px solid var(--cd-line); border-radius: var(--cd-radius);
+  font: 600 13px/1.5 var(--cd-font); color: var(--cd-ink); cursor: pointer;
+}
+.rs-slots__empty { margin: 0; font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }

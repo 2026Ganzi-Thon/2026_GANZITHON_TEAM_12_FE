@@ -51,6 +51,16 @@ onStateChange(state, payload, detail) {
 컨디션 저장 응답(TodayResult)을 `sessionStorage.todayResult`에 넣고 결과 화면이 그대로 쓴다.
 호흡은 건너뛸 수 있어 결과 계산은 컨디션 저장 시점이다.
 
+## 아직 주인이 없는 것
+
+화면 분담에 안 들어간 영역이라 둘 다 손대지 않고 있다. 정해야 한다.
+
+- 앱 시작 시 `GET /api/auth/csrf` + `GET /api/me` → `onboardingStep` 분기
+  (`api.js`의 `ensureCsrf()`는 있고 부르는 곳이 없다)
+- 페이지 라우팅
+- 401 `UNAUTHENTICATED`를 한 곳에서 받아 시작 화면으로 보내기 (API.md 0절)
+- 아침 체크 단계 흐름 전체
+
 ## 공용 파일 — 바꾸기 전에 서로 말한다
 
 - `pages/measure.html` — 셸. `#state`가 공유 지점

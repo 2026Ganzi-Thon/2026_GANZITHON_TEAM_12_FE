@@ -6,6 +6,12 @@
 import { mountShell } from './shell.js';
 import { api, ApiError } from './api.js';
 
+/** 동의 6종 (API.md 2절 PUT /api/onboarding/profile) */
+const CONSENTS = [
+  ['TERMS', '이용약관'], ['PRIVACY', '개인정보 처리방침'], ['AGE_14', '만 14세 이상'],
+  ['SENSITIVE_HRV', '건강정보'], ['CALENDAR', '구글 캘린더'], ['AI_NOTICE', 'AI 활용 안내'],
+];
+
 /** 백엔드 기준 6가지 ("수정 요청사항 2" 1-5: 직접 추가 없음) */
 const ACTIVITIES = [
   ['WALK', '걷기'], ['STRETCH', '스트레칭'], ['NAP', '낮잠'],
@@ -101,10 +107,7 @@ function consentRow() {
   const b = el('button', 'mp-row');
   b.type = 'button';
   b.append(el('span', null, '동의 관리'), el('span', 'mp-row__sub', 'AI 활용 안내 다시 보기'));
-  b.addEventListener('click', () => openSheet('AI 활용 안내', [
-    el('p', 'mp-sheet__text', 'Come & Down은 오늘의 해석 문구와 추천 문구, 일정 분류에 AI를 씁니다.'),
-    el('p', 'mp-sheet__text', 'AI에는 수치와 상태, 일정 제목만 보내고 닉네임·이메일·측정 원신호는 보내지 않아요.'),
-  ]));
+  b.addEventListener('click', manageConsents);
   return b;
 }
 
@@ -185,6 +188,60 @@ function manageCalendar() {
     load();
   }));
   openSheet('캘린더 연동 관리', nodes);
+}
+
+/** 동의 관리 (API.md 8절). 시안이 없어 목록 + 철회·재동의·기록 삭제만 둔다. */
+async function manageConsents() {
+  let list = [];
+  try {
+    list = (await api('/api/me/consents')).consents ?? [];
+  } catch (_) { /* 못 불러와도 안내는 보여준다 */ }
+  const by = Object.fromEntries(list.map((c) => [c.type, c]));
+  const hrv = by.SENSITIVE_HRV;
+
+  const nodes = [
+    el('p', 'mp-sheet__text', 'Come & Down은 해석 문구·추천 문구·일정 분류에 AI를 씁니다. 수치와 일정 제목만 보내고 닉네임·이메일·측정 원신호는 보내지 않아요.'),
+  ];
+  const rows = el('ul', 'mp-consents');
+  for (const [type, label] of CONSENTS) {
+    const li = el('li');
+    li.append(el('span', null, label), el('b', by[type]?.agreed ? 'is-on' : null, by[type]?.agreed ? '동의함' : '철회됨'));
+    rows.append(li);
+  }
+  nodes.push(rows);
+
+  if (hrv?.agreed) {
+    nodes.push(
+      el('p', 'mp-sheet__text', '건강정보 동의를 철회하면 측정이 꺼져요. 기록은 남겨둘 수도, 함께 지울 수도 있어요.'),
+      button('동의만 철회', 'cd-btn cd-btn--ghost', () => revokeHrv(false)),
+      button('철회하고 기록도 삭제', 'cd-btn cd-btn--ghost', () => revokeHrv(true)),
+    );
+  } else {
+    nodes.push(button('건강정보 다시 동의하기', 'cd-btn', async () => {
+      await api('/api/me/consents', { method: 'POST', body: { type: 'SENSITIVE_HRV', version: hrv?.version ?? CONSENT_VERSION } });
+      sheet.close();
+      load();
+    }));
+  }
+  nodes.push(button('건강 기록 전체 삭제', 'cd-btn cd-btn--ghost', deleteHealthData));
+  openSheet('동의 관리', nodes);
+}
+
+/** 동의 버전을 모를 때 쓰는 기본값. 백엔드가 올리면 같이 올린다. */
+const CONSENT_VERSION = '2026-11-01';
+
+async function revokeHrv(deleteData) {
+  if (!confirm(deleteData ? '동의를 철회하고 측정 기록도 모두 지울까요?' : '건강정보 동의를 철회할까요? 측정이 꺼져요.')) return;
+  await api(`/api/me/consents/SENSITIVE_HRV${deleteData ? '?deleteData=true' : ''}`, { method: 'DELETE' });
+  sheet.close();
+  load();
+}
+
+async function deleteHealthData() {
+  if (!confirm('측정·컨디션·번아웃 체크 기록을 모두 지울까요? 되돌릴 수 없어요.')) return;
+  await api('/api/hrv/data', { method: 'DELETE' });
+  sheet.close();
+  load();
 }
 
 async function logout() {

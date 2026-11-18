@@ -202,23 +202,51 @@ function suggestionCard(s, building) {
   const status = el('p', 'rs-suggest__status');
   status.hidden = true;
 
-  const act = async (path, label, el2) => {
+  const slots = el('div', 'rs-slots');
+  slots.hidden = true;
+
+  const done = (label) => {
+    actions.remove();
+    slots.remove();
+    status.hidden = false;
+    status.textContent = label;
+  };
+
+  const act = async (path, label, body) => {
     later.disabled = add.disabled = true;
     try {
-      await api(`/api/suggestions/${s.id}/${path}`, { method: 'POST', idempotencyKey: crypto.randomUUID() });
-      actions.remove();
-      status.hidden = false;
-      status.textContent = label;
+      await api(`/api/suggestions/${s.id}/${path}`, { method: 'POST', body, idempotencyKey: crypto.randomUUID() });
+      done(label);
     } catch (e) {
       later.disabled = add.disabled = false;
       status.hidden = false;
       status.textContent = e instanceof ApiError ? e.message : '잠시 후 다시 시도해주세요.';
+      // 409 SLOT_CONFLICT — 그 사이 같은 시간에 일정이 생겼다. 다른 시간을 보여준다 (API.md 5절)
+      if (e instanceof ApiError && e.code === 'SLOT_CONFLICT') showSlots();
     }
   };
+
+  async function showSlots() {
+    slots.replaceChildren(el('p', 'rs-slots__title', '다른 시간 보기'));
+    slots.hidden = false;
+    try {
+      const { slots: list = [] } = await api(`/api/suggestions/${s.id}/slots`);
+      if (!list.length) { slots.append(el('p', 'rs-slots__empty', '오늘은 비어 있는 시간이 없어요.')); return; }
+      for (const slot of list) {
+        const b = el('button', 'rs-slots__item', slotLabel({ ...s, start: slot.start }));
+        b.type = 'button';
+        b.addEventListener('click', () => act('approve', '구글 캘린더에 넣었어요', { start: slot.start, end: slot.end }));
+        slots.append(b);
+      }
+    } catch (_) {
+      slots.append(el('p', 'rs-slots__empty', '다른 시간을 불러오지 못했어요.'));
+    }
+  }
+
   later.addEventListener('click', () => act('dismiss', '다음에 다시 알려드릴게요'));
   add.addEventListener('click', () => act('approve', '구글 캘린더에 넣었어요'));
   actions.append(later, add);
-  card.append(actions, status);
+  card.append(actions, slots, status);
   return card;
 }
 
