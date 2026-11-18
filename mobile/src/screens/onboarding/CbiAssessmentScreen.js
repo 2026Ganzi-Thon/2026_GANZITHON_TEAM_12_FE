@@ -263,8 +263,8 @@ export default function CbiAssessmentScreen({
       <View style={styles.header}>
         <TouchableOpacity
           onPress={handlePrev}
-          disabled={currentIndex === 0}
-          style={[styles.backButton, currentIndex === 0 && { opacity: 0.3 }]}
+          disabled={currentIndex === 0 && !onBack}
+          style={[styles.backButton, currentIndex === 0 && !onBack && { opacity: 0.3 }]}
         >
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
