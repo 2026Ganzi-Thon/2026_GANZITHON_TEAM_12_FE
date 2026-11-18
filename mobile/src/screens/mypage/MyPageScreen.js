@@ -50,7 +50,10 @@ export default function MyPageScreen({ onOpenSafety, onOpenGlossary, onLoggedOut
   const [me, setMe] = useState(null);
   const [settings, setSettings] = useState(null);
   const [consents, setConsents] = useState([]);
-  const [sheet, setSheet] = useState(null); // 'nickname' | 'measureTime' | 'activities' | 'calendar' | 'consents'
+  // 'nickname' | 'measureTime' | 'activities' | 'calendar' | 'consents'
+  const [sheet, setSheet] = useState(null);
+  // 회복 낮음이 2주 이어졌을 때만 "도움 받을 수 있는 곳"을 보여준다(명세 9절)
+  const [showSafety, setShowSafety] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState(null);
 
@@ -61,12 +64,18 @@ export default function MyPageScreen({ onOpenSafety, onOpenGlossary, onLoggedOut
 
   const load = useCallback(async () => {
     try {
-      const [meRes, settingsRes] = await Promise.all([
+      const [meRes, settingsRes, safetyRes] = await Promise.all([
         apiRequest('/api/me'),
         apiRequest('/api/me/settings'),
+        // 안전 안내 조회가 실패해도 마이페이지는 열린다
+        apiRequest('/api/safety').catch(() => null),
       ]);
       setMe(meRes);
       setSettings(settingsRes);
+      // "도움 받을 수 있는 곳"은 회복 낮음이 2주 이어졌을 때만 보여준다(명세 9절).
+      setShowSafety(
+        Boolean(safetyRes?.alerts?.some((a) => a.triggerType === 'LOW_RECOVERY_2W'))
+      );
     } catch (e) {
       setError(e?.message || '정보를 불러오지 못했어요.');
     } finally {
@@ -142,10 +151,12 @@ export default function MyPageScreen({ onOpenSafety, onOpenGlossary, onLoggedOut
           <Row label="용어 사전" onPress={onOpenGlossary} />
         </View>
 
-        <TouchableOpacity style={[styles.row, styles.rowHelp]} onPress={onOpenSafety} accessibilityRole="button">
-          <Text style={styles.rowHelpLabel}>도움 받을 수 있는 곳</Text>
-          <Text style={styles.rowChevron}>ⓘ</Text>
-        </TouchableOpacity>
+        {showSafety ? (
+          <TouchableOpacity style={[styles.row, styles.rowHelp]} onPress={onOpenSafety} accessibilityRole="button">
+            <Text style={styles.rowHelpLabel}>도움 받을 수 있는 곳</Text>
+            <Text style={styles.rowChevron}>ⓘ</Text>
+          </TouchableOpacity>
+        ) : null}
 
         <View style={styles.account}>
           <Text style={styles.accountLabel}>계정 관리</Text>

@@ -419,6 +419,7 @@ function handleMockRequest(path, method, body) {
   if (cleanPath === '/api/safety') {
     return {
       show: true,
+      // 조건이 풀린 경우를 보려면 alerts 를 빈 배열로 둔다
       alerts: [
         { id: 3, triggerType: 'LOW_RECOVERY_2W', message: '최근 2주 동안 회복이 평소보다 낮게 이어졌어요.' },
       ],
