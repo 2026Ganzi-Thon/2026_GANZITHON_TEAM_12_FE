@@ -1,0 +1,43 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>결과 화면 확인용</title>
+<link rel="stylesheet" href="../styles/base.css">
+<style>body{padding:24px;display:block}button{display:block;width:320px;margin:8px 0;padding:14px;border:1px solid #ccc;border-radius:10px;background:#fff;cursor:pointer}</style>
+<h1 style="font-size:18px">B6 결과 화면 — 백엔드 없이 보기</h1>
+<button data-case="building">B6-1 기준선 만드는 중 (3/7)</button>
+<button data-case="established">B6-2 기준선 확정 · 평소보다 12% 낮음</button>
+<button data-case="noPct">B6-2 변형 · 비교 자료 부족 (changePct null)</button>
+<script type="module">
+const suggestion = {
+  id: 31, type: 'RECOVERY', status: 'PROPOSED', title: '20분 걷기',
+  start: '2026-03-12T16:00:00+09:00', durationMin: 20,
+  message: { text: '회의 사이 40분이 비어 있어요.', aiGenerated: true, fallback: false },
+};
+const CASES = {
+  building: {
+    date: '2026-03-12', phase: 'BUILDING',
+    recovery: { status: 'BUILDING', changePct: null },
+    qualityLevel: 'GOOD', rmssdMs: 41.0, heartRateBpm: 64.0,
+    excludedFromBaseline: false,
+    baseline: { validDays: 3, required: 7, established: false },
+    conditionScore: 3, judgment: 'BUILDING', interpretation: null,
+    suggestions: [{ ...suggestion, reasonCode: 'OVERLOAD' }],
+  },
+  established: {
+    date: '2026-03-12', phase: 'ESTABLISHED',
+    recovery: { status: 'LOW', changePct: -12.0, trendRmssdMs: 39.8, normalRange: { lowerMs: 38.1, upperMs: 51.6 } },
+    qualityLevel: 'GOOD', rmssdMs: 34.0, heartRateBpm: 68.0,
+    excludedFromBaseline: true,
+    baseline: { validDays: 9, required: 7, established: true, frozen: false },
+    conditionScore: 3, judgment: 'OVERLOAD_LOW',
+    interpretation: { text: '이번 주 일정이 평소보다 많고 회복이 낮은 편이에요. 오늘은 가볍게 움직여 보세요.', aiGenerated: true, fallback: false },
+    suggestions: [{ ...suggestion, reasonCode: 'LOW_RECOVERY' }],
+  },
+};
+CASES.noPct = { ...CASES.established, recovery: { status: 'INSUFFICIENT', changePct: null }, excludedFromBaseline: false, interpretation: null, suggestions: [] };
+
+document.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => {
+  sessionStorage.setItem('todayResult', JSON.stringify(CASES[b.dataset.case]));
+  location.href = './result.html';
+}));
+</script>

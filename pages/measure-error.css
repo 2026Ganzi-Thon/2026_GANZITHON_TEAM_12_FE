@@ -1,0 +1,136 @@
+/* B3-2, B3-9, E1, E2, E5 — measure-error.js 전용. 토큰은 styles/base.css */
+
+/* B3-2 상단 토스트 (셸의 #toast를 채운다) */
+.m-toast {
+  display: flex; align-items: center; gap: 10px;
+  margin: var(--cd-space-5) var(--cd-space-5) 0;
+  padding: 14px var(--cd-space-4);
+  border-radius: var(--cd-radius);
+  background: var(--cd-toast-bg); color: #fff;
+  font-size: 13px; font-weight: 600;
+}
+.m-toast[hidden] { display: none; }
+
+#state[data-view] {
+  display: flex; flex-direction: column; align-items: center;
+  min-height: 100%; padding: var(--cd-space-5);
+  gap: var(--cd-space-4); text-align: center;
+}
+
+/* 원형 아이콘 — 시안 치수 그대로 */
+.err__ring, .err__ring-inner { display: flex; align-items: center; justify-content: center; border-radius: 50%; }
+.err__ring { flex: none; margin-top: var(--cd-space-5); }
+.err__ring--sm { width: 68px; height: 68px; background: #EDF2E9; }
+.err__ring--sm .err__ring-inner { width: 52px; height: 52px; background: #DFE9DA; border: 1px solid #D6E1D2; }
+.err__ring--md { width: 80px; height: 80px; background: var(--cd-accent-soft); }
+.err__ring--lg { width: 104px; height: 104px; background: var(--cd-accent-soft-2); border: 1px solid #DBE6D9; }
+.err__ring--xl { width: 132px; height: 132px; background: #E6EDE0; border: 1px solid var(--cd-accent-line); }
+.err__ring--xl .err__ring-inner { width: 78px; height: 78px; background: var(--cd-bg); border: 1px solid #CFDDC6; }
+.err__mark { font-size: 26px; font-weight: 700; color: var(--cd-warn-ink); line-height: 1; }
+
+.err__title { margin: 0; font-size: var(--cd-text-display); font-weight: 700; line-height: 1.4; }
+.err__body  { margin: 0; font-size: var(--cd-text-body); line-height: 1.7; color: var(--cd-ink-mute); }
+#state[data-view="UNSUPPORTED"] .err__body { font-size: var(--cd-text-title); }
+/* 줄바꿈 위치를 시안대로 두되, 좁은 화면에서는 이어 붙는다 */
+.err__body + .err__body { margin-top: calc(var(--cd-space-1) * -1); }
+
+/* B3-9 사유 카드 — 안내 문구 + 해당 사유 1개 */
+.err__card {
+  width: 100%; padding: var(--cd-space-4);
+  background: var(--cd-surface); border: 1px solid var(--cd-line); border-radius: var(--cd-radius-card);
+}
+.err__card-figure {
+  display: flex; align-items: center; justify-content: center;
+  height: 104px; margin-bottom: var(--cd-space-4);
+  background: var(--cd-surface-mute); border-radius: var(--cd-radius);
+}
+.err__card-guide  { margin: 0; font-size: var(--cd-text-body); font-weight: 700; }
+.err__card-reason { margin: var(--cd-space-1) 0 0; font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }
+
+/* E1 안내 카드 */
+.err__section {
+  width: 100%; padding: 17px 21px; text-align: left;
+  background: var(--cd-surface); border: 1px solid var(--cd-line); border-radius: var(--cd-radius-card);
+}
+.err__section--dashed { border-style: dashed; }
+.err__section-title { margin: 0 0 var(--cd-space-2); font-size: var(--cd-text-title); font-weight: 700; }
+.err__section-body  { margin: 0; font-size: var(--cd-text-sub); line-height: 1.65; color: var(--cd-ink-mute); }
+.err__section-body + .err__section-body { margin-top: var(--cd-space-2); }
+
+/* 버튼은 항상 화면 아래에 붙는다 */
+.err__actions {
+  width: 100%; margin-top: auto;
+  display: flex; flex-direction: column; gap: 10px;
+  padding-top: var(--cd-space-4); padding-bottom: 28px;
+}
+
+/* ── E3 손가락 대기 ───────────────────────────── */
+#state[data-view="WAITING"], #state[data-view="START"] { gap: var(--cd-space-3); }
+
+.err__camera {
+  position: relative; width: 100%; height: 356px;
+  display: flex; align-items: center; justify-content: center;
+  background: #EFEFEC; border: 1px solid #E3E1DB; border-radius: var(--cd-radius-card);
+}
+.err__camera video { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
+.err__camera-ph { display: flex; flex-direction: column; align-items: center; gap: 10px; font-size: 13px; color: #676C66; }
+.err__camera-ph p { margin: 0; }
+.err__camera-ph img {
+  box-sizing: content-box; padding: 13px; border-radius: 50%;
+  background: #F6F5F2; border: 1px solid #E1E0DA;
+}
+.err__chip {
+  position: absolute; top: var(--cd-space-4); left: var(--cd-space-4);
+  display: flex; align-items: center; gap: var(--cd-space-2);
+  padding: 5px 11px; border-radius: 999px;
+  background: var(--cd-accent-soft-2); border: 1px solid #DCE6D8;
+  font-size: var(--cd-text-label); font-weight: 500; color: #4A6650;
+}
+.err__chip-dot { width: 12px; height: 12px; border-radius: 50%; background: #F8E0D3; display: grid; place-items: center; }
+.err__chip-dot::after { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #7E9A82; }
+
+.err__tip {
+  display: flex; gap: var(--cd-space-3); width: 100%; padding: 17px; text-align: left;
+  background: var(--cd-accent-soft-2); border: 1px solid #DCE6D8; border-radius: var(--cd-radius-card);
+}
+.err__tip-icon { flex: none; display: grid; place-items: center; width: 32px; height: 32px; background: var(--cd-surface); border: 1px solid #D5E1D0; border-radius: var(--cd-space-2); }
+.err__tip-title { margin: 0 0 var(--cd-space-1); font-size: var(--cd-text-label); font-weight: 600; color: #33503B; }
+.err__tip-body  { margin: 0; font-size: var(--cd-text-label); line-height: 1.67; color: #4A6650; }
+
+/* ── E4 측정 시작 전 ──────────────────────────── */
+.err__banner {
+  display: flex; gap: var(--cd-space-3); width: 100%; padding: var(--cd-space-4); text-align: left;
+  background: var(--cd-warn-bg); border: 1px solid #F2DBCE; border-radius: var(--cd-radius-card);
+}
+.err__banner img { flex: none; margin-top: 2px; }
+.err__banner-title { margin: 0 0 6px; font-size: var(--cd-text-body); font-weight: 700; }
+.err__banner-body  { margin: 0; font-size: var(--cd-text-caption); line-height: 1.63; color: var(--cd-ink-mute); }
+
+.err__figure {
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+  width: 100%; height: 204px; padding: 0 29px;
+  background: #F1EFEB; border: 1px solid #E5E1DA; border-radius: var(--cd-radius-card);
+}
+.err__figure p { margin: 0; font-size: var(--cd-text-caption); color: #6E6D66; }
+
+.err__bullets {
+  width: 100%; margin: 0; padding: 17px 17px 17px 31px; text-align: left;
+  list-style: none; background: var(--cd-surface);
+  border: 1px solid rgba(31, 61, 48, .35); border-radius: var(--cd-radius-card);
+}
+.err__bullets li { position: relative; font-size: var(--cd-text-sub); line-height: 1.38; color: #2F3B35; }
+.err__bullets li + li { margin-top: 10px; }
+.err__bullets li::before { content: ''; position: absolute; left: -14px; top: 7px; width: 4px; height: 4px; border-radius: 50%; background: #7E9A85; }
+
+/* chrome="steps": 머리말·탭은 감추고 단계 표시만 남긴다 (E3) */
+body[data-chrome="steps"] .m-head,
+body[data-chrome="steps"] .m-tabs { display: none; }
+
+/* B3-9 측정 사유 (1차 수정본) */
+.err__reasonrow {
+  width: 100%; padding: 15px 17px; text-align: left;
+  background: #FAF5EA; border: 1px dashed #E4DDCD; border-radius: var(--cd-radius-card);
+}
+.err__reasonrow-label { margin: 0 0 var(--cd-space-2); font-size: var(--cd-text-label); font-weight: 600; color: var(--cd-ink-mute); }
+.err__reasonrow-text  { display: flex; align-items: center; gap: var(--cd-space-2); margin: 0; font-size: 13px; font-weight: 700; }
+.err__reasonrow-dot   { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--cd-warn-ink); }

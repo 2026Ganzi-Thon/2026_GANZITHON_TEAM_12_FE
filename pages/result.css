@@ -1,0 +1,82 @@
+/* B6 오늘의 측정 결과 — BUILDING / ESTABLISHED 두 단계 공용 */
+#app { gap: var(--cd-space-3); padding-bottom: var(--cd-space-5); }
+
+.rs-head { display: flex; align-items: center; gap: var(--cd-space-3); padding: var(--cd-space-1) 0 var(--cd-space-2); }
+.rs-head img { border-radius: 11px; background: #FBE4D4; }
+.rs-head__date  { margin: 0; font-size: var(--cd-text-label); color: var(--cd-ink-mute); }
+.rs-head__title { margin: 2px 0 0; font-size: 21px; font-weight: 700; }
+
+.rs-card { padding: 15px 17px; background: var(--cd-surface); border: 1px solid #E9E1D5; border-radius: var(--cd-radius-card); }
+.rs-card__top   { display: flex; align-items: center; justify-content: space-between; gap: var(--cd-space-2); }
+.rs-card__label { display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: var(--cd-ink-mute); }
+.rs-card__hint  { margin: 0; font-size: var(--cd-text-label); color: var(--cd-ink-mute); }
+
+.rs-chip { display: inline-flex; align-items: center; gap: var(--cd-space-2); padding: 6px 10px; border-radius: 999px; background: #EDF3EE; font-size: var(--cd-text-label); font-weight: 600; color: #4E7059; }
+.rs-chip--solid { background: var(--cd-accent); color: var(--cd-on-accent); }
+.rs-chip--dot::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: #7C9A87; }
+
+.rs-badge { display: inline-flex; align-items: center; gap: var(--cd-space-2); padding: 6px 10px; border-radius: 999px; background: #EDF3EE; border: 1px solid #DCE7DE; font-size: var(--cd-text-label); font-weight: 600; color: #4E7059; }
+
+/* 기준선 만드는 중 (B6-1) */
+.rs-baseline { display: flex; flex-direction: column; gap: 14px; }
+.rs-baseline__title { display: flex; gap: 6px; margin: 0; font-size: var(--cd-text-body); font-weight: 600; }
+.rs-baseline__title b { color: #4F7F5E; }
+.rs-baseline__dots { display: flex; gap: 7px; }
+.rs-baseline__dots span { width: 10px; height: 10px; border-radius: 50%; background: var(--cd-surface); border: 1px solid #D3DED4; }
+.rs-baseline__dots .is-on { background: #7FA98D; border-color: #7FA98D; }
+.rs-baseline__note { margin: 0; font-size: var(--cd-text-label); color: var(--cd-ink-mute); }
+
+/* HRV·심박수 (B6-1) */
+.rs-metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--cd-space-3); }
+.rs-metric { display: flex; flex-direction: column; gap: var(--cd-space-2); }
+.rs-metric__value { display: flex; align-items: baseline; gap: 2px; margin: 0; }
+.rs-metric__value b    { font-size: 26px; font-weight: 700; }
+.rs-metric__value span { font-size: var(--cd-text-label); color: var(--cd-ink-mute); }
+.rs-quality { display: flex; align-items: center; justify-content: space-between; }
+
+/* 평소 대비 회복 (B6-2) */
+.rs-recovery { display: flex; flex-direction: column; gap: var(--cd-space-5); }
+.rs-recovery__lead  { margin: 0 0 var(--cd-space-1); font-size: 13px; font-weight: 500; color: var(--cd-ink-mute); }
+.rs-recovery__value { display: flex; align-items: baseline; gap: var(--cd-space-2); margin: 0; }
+.rs-recovery__value b    { font-size: 42px; font-weight: 700; line-height: 1; }
+.rs-recovery__value span { font-size: var(--cd-text-title); font-weight: 600; }
+.rs-recovery__na { margin: 0; font-size: 13px; color: var(--cd-ink-mute); }
+
+.rs-quality-line { display: flex; flex-direction: column; gap: var(--cd-space-2); }
+.rs-quality-line__row { display: flex; align-items: center; gap: var(--cd-space-2); font-size: 13px; font-weight: 500; color: #3B4A41; flex-wrap: wrap; }
+.rs-sep { color: #767065; }
+
+.rs-ai { display: flex; flex-direction: column; gap: 10px; padding: 17px; }
+.rs-ai__text { margin: 0; font-size: var(--cd-text-body); line-height: 1.7; }
+
+.rs-excluded {
+  display: flex; align-items: center; gap: 10px; margin: 0; padding: 15px 17px;
+  background: var(--cd-bg); border: 1px dashed #E3D9C8; border-radius: var(--cd-radius-card);
+  font-size: var(--cd-text-caption); color: #6B6155;
+}
+
+/* 오늘의 추천 */
+.rs-suggest { display: flex; flex-direction: column; gap: var(--cd-space-3); padding: 16px; }
+.rs-suggest__title  { margin: 0; font-size: var(--cd-text-body); font-weight: 700; }
+.rs-suggest__reason { margin: 0; font-size: 13px; color: #3B4F47; }
+.rs-suggest__reason.is-boxed { padding: 11px 12px; background: var(--cd-warn-bg); border-radius: var(--cd-radius); font-size: var(--cd-text-caption); font-weight: 500; color: #8C5439; }
+.rs-suggest__when { display: flex; align-items: center; gap: 10px; padding-top: 13px; border-top: 1px solid #EFEAE1; }
+.rs-suggest__icon { flex: none; display: grid; place-items: center; width: 36px; height: 36px; border-radius: var(--cd-radius); background: #EDF3EE; }
+.rs-suggest__slot { margin: 0; font-size: var(--cd-text-title); font-weight: 700; }
+.rs-suggest__hint { margin: 2px 0 0; font-size: var(--cd-text-label); color: var(--cd-ink-mute); }
+.rs-suggest__actions { display: grid; grid-template-columns: 1fr 1fr; gap: var(--cd-space-2); }
+.rs-suggest__actions .cd-btn { min-height: 44px; border-radius: var(--cd-radius); font-size: 13.5px; }
+.rs-suggest__status { margin: 0; font-size: var(--cd-text-caption); color: var(--cd-ink-mute); text-align: center; }
+
+.rs-home { min-height: 48px; margin-top: var(--cd-space-2); }
+.rs-empty { margin: var(--cd-space-6) 0; font-size: var(--cd-text-body); color: var(--cd-ink-mute); text-align: center; }
+
+/* 409 SLOT_CONFLICT 후 다른 시간 보기 */
+.rs-slots { display: flex; flex-direction: column; gap: var(--cd-space-2); }
+.rs-slots__title { margin: 0; font-size: var(--cd-text-caption); font-weight: 600; color: var(--cd-ink-mute); }
+.rs-slots__item {
+  min-height: 44px; padding: 0 14px; text-align: left;
+  background: var(--cd-surface); border: 1px solid var(--cd-line); border-radius: var(--cd-radius);
+  font: 600 13px/1.5 var(--cd-font); color: var(--cd-ink); cursor: pointer;
+}
+.rs-slots__empty { margin: 0; font-size: var(--cd-text-caption); color: var(--cd-ink-mute); }

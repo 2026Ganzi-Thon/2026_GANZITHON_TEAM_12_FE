@@ -1,0 +1,21 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>안전 안내 확인용</title>
+<link rel="stylesheet" href="../styles/base.css">
+<link rel="stylesheet" href="./measure.css">
+<link rel="stylesheet" href="./checkin.css">
+<link rel="stylesheet" href="./safety.css">
+<main class="m-main"><div id="app"></div></main>
+<script>
+  window.__safetyMock = {
+    show: true,
+    alerts: [{ id: 3, triggerType: 'LOW_RECOVERY_2W', message: '최근 2주 동안 회복이 평소보다 낮게 이어졌어요.' }],
+    resources: [
+      { id: 'mental-health-crisis-1577-0199', name: '정신건강위기상담', phone: '1577-0199', url: 'https://www.mohw.go.kr' },
+      { id: 'suicide-prevention-109', name: '자살예방상담전화', phone: '109', url: 'https://www.129.go.kr/109' },
+    ],
+    disclaimer: 'Come & Down은 의료 서비스가 아니며 질병 유무를 판단하지 않아요.',
+  };
+</script>
+<script type="module" src="./safety.js"></script>
