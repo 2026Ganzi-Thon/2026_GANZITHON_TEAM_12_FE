@@ -31,3 +31,5 @@ body[data-chrome="none"] .m-tabs { display: none; }
 .m-chip b { color: var(--cd-ink); }
 .m-steps .is-done { color: var(--cd-ink-mute); }
 .m-steps .is-current { color: var(--cd-ink); font-weight: 700; border-bottom: 2px solid var(--cd-ink); padding-bottom: 2px; }
+
+.m-head__aside { margin-left: auto; font-size: var(--cd-text-label); font-weight: 500; color: var(--cd-ink-mute); }

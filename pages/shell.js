@@ -16,13 +16,14 @@ const el = (tag, cls, text) => {
  * @param {object} o
  * @param {boolean} [o.head]    머리말 자체를 둘지. 화면이 자기 머리말을 그리면 false
  * @param {string}  [o.title]   머리말 제목. 없으면 로고만
+ * @param {string}  [o.aside]   머리말 오른쪽 작은 글자 (예: '안전 안내')
  * @param {string}  [o.chip]    오른쪽 칩 (예: '기준선 만드는 중'), chipValue와 함께
  * @param {string}  [o.chipValue]
  * @param {boolean} [o.back]    뒤로 버튼
  * @param {Array<{label: string, state: 'done'|'current'|'todo'}>} [o.steps]
  * @param {string|false} [o.tab] 하단 탭에서 현재 위치. false면 탭 없음
  */
-export function mountShell({ head: withHead = true, title, chip, chipValue, back = false, steps, tab = false } = {}) {
+export function mountShell({ head: withHead = true, title, aside, chip, chipValue, back = false, steps, tab = false } = {}) {
   const main = document.querySelector('main');
 
   if (withHead) {
@@ -46,6 +47,7 @@ export function mountShell({ head: withHead = true, title, chip, chipValue, back
     brand.append(logo, el('span', null, 'Come & Down'));
     head.append(brand);
   }
+  if (aside) head.append(el('span', 'm-head__aside', aside));
   if (chip) {
     const c = el('span', 'm-chip');
     c.append(el('span', null, chip));
