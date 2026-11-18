@@ -26,6 +26,7 @@ export default function MainTabNavigator({
   const [calendarRefreshKey, setCalendarRefreshKey] = useState(0);
   const [homeBaseline, setHomeBaseline] = useState(null);
   const [latestMeasurement, setLatestMeasurement] = useState(null);
+  const [todayResult, setTodayResult] = useState(null);
 
   // B2-1 카테고리 변경 풀스크린
   if (editingEvent) {
@@ -65,6 +66,11 @@ export default function MainTabNavigator({
         {activeTab === 'checkin' && (
           <HrvMeasurementScreen
             baseline={homeBaseline}
+            // 오늘 체크를 이미 마쳤으면 다시 재게 하지 않고 결과 화면으로 (명세 6절)
+            onAlreadyDone={renderExtraTabs ? (result) => {
+              setTodayResult(result);
+              setActiveTab('today_result');
+            } : undefined}
             onMeasurementSuccess={(res) => {
               setLatestMeasurement(res?.measurement || res);
               // B4 컨디션 체크 연결 전까지는 홈으로 복귀
@@ -89,7 +95,7 @@ export default function MainTabNavigator({
           activeTab !== 'calendar' &&
           activeTab !== 'checkin' &&
           renderExtraTabs &&
-          renderExtraTabs(activeTab, setActiveTab, { latestMeasurement, homeBaseline })}
+          renderExtraTabs(activeTab, setActiveTab, { latestMeasurement, homeBaseline, todayResult })}
       </View>
 
       {/* 하단 탭 바 */}

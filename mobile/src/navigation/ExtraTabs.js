@@ -19,6 +19,7 @@ export default function ExtraTabs({
   activeTab,
   setActiveTab,
   homeBaseline,
+  todayResult: todayResultFromTab,
   onOpenSafety,
   onLoggedOut,
 }) {
@@ -49,7 +50,7 @@ export default function ExtraTabs({
     case 'today_result':
       return (
         <ResultScreen
-          result={todayResult}
+          result={todayResult ?? todayResultFromTab}
           onHome={() => {
             setTodayResult(null);
             setActiveTab('home');

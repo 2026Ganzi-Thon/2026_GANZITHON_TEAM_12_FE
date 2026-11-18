@@ -8,10 +8,11 @@ import {
   SafeAreaView,
   Modal,
   Platform,
-  Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
+import { apiRequest } from '../../api/client';
 import { createHrvMeasurement } from '../../utils/hrvMeasurement';
 
 const PREPARE_SEC = 10;
@@ -28,7 +29,31 @@ export default function HrvMeasurementScreen({
   baseline,
   onMeasurementSuccess,
   onSkipToCondition,
+  onAlreadyDone,
 }) {
+  // 측정 탭에 들어올 때 오늘 체크가 이미 끝났는지 본다(명세 6절).
+  // 끝났으면(result 가 있으면) 다시 재게 하지 않고 결과 화면으로 보낸다.
+  const [checkingToday, setCheckingToday] = useState(Boolean(onAlreadyDone));
+
+  useEffect(() => {
+    if (!onAlreadyDone) return undefined;
+    let alive = true;
+    (async () => {
+      try {
+        const today = await apiRequest('/api/morning-checks/today');
+        if (alive && today?.result) {
+          onAlreadyDone(today.result);
+          return;
+        }
+      } catch (_) {
+        // 조회가 실패해도 측정을 막지 않는다
+      }
+      if (alive) setCheckingToday(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [onAlreadyDone]);
   // 상태: IDLE | WAITING_FINGER | PREPARING | MEASURING | ANALYZING | RETRY_NETWORK
   const [phase, setPhase] = useState('IDLE');
   const [permissionModalVisible, setPermissionModalVisible] = useState(false);
@@ -223,6 +248,15 @@ export default function HrvMeasurementScreen({
       </View>
     </View>
   );
+
+  // 오늘 체크를 이미 마쳤으면 결과 화면으로 (조회 실패는 측정을 막지 않는다)
+  if (checkingToday) {
+    return (
+      <SafeAreaView style={[styles.container, styles.centerBox]}>
+        <ActivityIndicator color={Colors.primary} />
+      </SafeAreaView>
+    );
+  }
 
   // 네트워크 전송 재시도 화면 (Idempotency-Key 유지 재전송)
   if (phase === 'RETRY_NETWORK') {
@@ -558,6 +592,7 @@ export default function HrvMeasurementScreen({
 }
 
 const styles = StyleSheet.create({
+  centerBox: { alignItems: 'center', justifyContent: 'center' },
   container: { flex: 1, backgroundColor: Colors.background },
   topSection: { paddingHorizontal: 20, paddingTop: 14, paddingBottom: 10 },
   brandRow: {

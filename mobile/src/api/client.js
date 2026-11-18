@@ -264,6 +264,23 @@ function handleMockRequest(path, method, body) {
 
   // ── B3 측정 탭 진입 · B4 컨디션 · B5 호흡 (명세 6절) ──────────────
   if (cleanPath === '/api/morning-checks/today') {
+    // 컨디션까지 저장했으면 result 가 채워져 온다(명세 6절). 목업도 그대로 흉내 낸다.
+    if (mockState.conditionScore != null) {
+      return {
+        date: new Date().toISOString().slice(0, 10),
+        dayIndex: 3,
+        phase: 'BUILDING',
+        steps: {
+          measurement: { done: true, measurementId: 77, qualityLevel: 'GOOD' },
+          condition: { done: true },
+          breathing: { done: false },
+        },
+        baseline: { validDays: 3, required: 7 },
+        result: handleMockRequest('/api/morning-checks/today/condition', 'PUT', {
+          score: mockState.conditionScore,
+        }),
+      };
+    }
     return {
       date: new Date().toISOString().slice(0, 10),
       dayIndex: 3,
