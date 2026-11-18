@@ -4,6 +4,7 @@ import { Platform } from 'react-native';
 // 로컬에서 화면만 볼 때: 환경변수 EXPO_PUBLIC_USE_MOCK 을 참으로 두고 expo 를 띄운다.
 // (BE 저장소 CD 는 목업이 켜진 채로 배포되는 것을 막는다. 이 형태면 그 검사를 그대로 통과한다.)
 const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
+const MOCK_DAY28 = USE_MOCK && process.env.EXPO_PUBLIC_MOCK_DAY28 === 'true';
 
 const API_BASE_URL =
   Platform.OS === 'web'
@@ -39,6 +40,7 @@ export function generateUuid() {
 
 // --- 프리뷰용 인메모리 목업 상태 ---
 const mockState = {
+  day28Completed: false,
   nickname: '유진',
   hrvConsent: true,
   conditionScore: null,
@@ -134,6 +136,10 @@ function handleMockRequest(path, method, body) {
     };
   }
   if (cleanPath === '/api/cbi/assessments' && method === 'POST') {
+    if (body?.round === 'DAY28') {
+      mockState.day28Completed = true;
+      return { onboardingStep: 'DONE', personal: { score: 50, level: 'HIGH' }, work: { score: 46.4, level: 'LOW' }, safety: { show: false } };
+    }
     mockState.onboardingStep = 'LIFESTYLE';
     return {
       onboardingStep: 'LIFESTYLE',
@@ -319,6 +325,49 @@ function handleMockRequest(path, method, body) {
 
   // ── C1 회복 리포트 (명세 7절) ─────────────────────────────────
   if (cleanPath === '/api/reports/recovery') {
+    // 기준선이 확정된 뒤 모습(그래프 포함)도 확인할 수 있게 둔다.
+    // ?mockUnlocked=1 을 붙이면 잠금이 풀린 응답을 돌려준다.
+    if (MOCK_DAY28 || new URLSearchParams(path.split('?')[1]).get('mockUnlocked') === '1') {
+      const day = (back) => {
+        const d = new Date();
+        d.setDate(d.getDate() - back);
+        return d.toISOString().slice(0, 10);
+      };
+      const points = [];
+      const trend = [];
+      const normalBand = [];
+      for (let i = 27; i >= 0; i--) {
+        const date = day(i);
+        const base = 41 + Math.sin(i / 3) * 5;
+        if (i % 5 !== 2) points.push({ date, rmssdMs: Math.round(base * 10) / 10, excluded: i % 7 === 3, qualityLevel: 'GOOD' });
+        trend.push({ date, rmssdMs: Math.round((base - 1) * 10) / 10 });
+        normalBand.push({ date, lowerMs: Math.round((base - 6) * 10) / 10, upperMs: Math.round((base + 6) * 10) / 10 });
+      }
+      const weekStart = (back) => day(back);
+      return {
+        locked: false,
+        unlock: { requiredDays: 7, validDays: 28 },
+        graph: {
+          from: day(27),
+          to: day(-3),
+          points,
+          trend,
+          normalBand,
+          normalRange: { lowerMs: 38.1, upperMs: 51.6 },
+          loadWeeks: [
+            { week: 1, weekStart: weekStart(27), weekEnd: weekStart(21), current: false, loadScore: 41 },
+            { week: 2, weekStart: weekStart(20), weekEnd: weekStart(14), current: false, loadScore: 58 },
+            { week: 3, weekStart: weekStart(13), weekEnd: weekStart(7), current: false, loadScore: 36 },
+            { week: 4, weekStart: weekStart(6), weekEnd: weekStart(0), current: true, loadScore: 52 },
+          ],
+        },
+        hrvVsUsualPct: -6.0,
+        recoveryStatus: 'LOW',
+        latestQuality: 'GOOD',
+        loadVsUsualPct: 18.0,
+        interpretation: { text: '이번 주 일정이 평소보다 많고 회복이 낮은 편이에요.', aiGenerated: true, fallback: false },
+      };
+    }
     return {
       locked: true,
       unlock: { requiredDays: 7, validDays: 3 },
@@ -326,6 +375,20 @@ function handleMockRequest(path, method, body) {
       hrvVsUsualPct: null,
       recoveryStatus: null,
       interpretation: null,
+    };
+  }
+  if (cleanPath === '/api/reports/four-week') {
+    if (!mockState.hrvConsent) return { available: false, cbiDue: false, unavailableReason: 'CONSENT_REQUIRED' };
+    if (!MOCK_DAY28) return { available: false, cbiDue: false, unavailableReason: null, availableFrom: new Date(Date.now() + 25 * 86400000).toISOString().slice(0, 10) };
+    if (!mockState.day28Completed) return { available: false, cbiDue: true, unavailableReason: null };
+    return {
+      available: true, cbiDue: false, unavailableReason: null,
+      cbi: { initial: { personal: 62.5, work: 55.4 }, day28: { personal: 50, work: 46.4 }, diff: { personal: -12.5, work: -9 } },
+      recovery: { firstWeekAvgMs: 41, lastWeekAvgMs: 44.2, changePct: 7.8 },
+      load: { firstWeekVsUsualPct: 22, lastWeekVsUsualPct: 5 },
+      suggestions: { approved: 11, done: 8 },
+      interpretation: { text: '시연용 데이터로 재현한 화면이에요. 처음과 4주 후 기록을 비교해 보세요.', aiGenerated: false, fallback: true },
+      plan: { plan: 'TRIAL', daysLeft: 0 },
     };
   }
   if (cleanPath === '/api/schedule/weeks') {
@@ -416,6 +479,11 @@ function handleMockRequest(path, method, body) {
 }
 
 let cachedCsrfToken = null;
+const unauthorizedListeners = new Set();
+export function onUnauthorized(listener) {
+  unauthorizedListeners.add(listener);
+  return () => unauthorizedListeners.delete(listener);
+}
 
 function readWebCookie(name) {
   if (typeof document === 'undefined' || !document.cookie) return null;
@@ -512,6 +580,11 @@ export async function apiRequest(path, options = {}, _retried = false) {
     cachedCsrfToken = null;
     await refreshCsrfToken();
     return apiRequest(path, options, true);
+  }
+
+  if (response.status === 401) {
+    cachedCsrfToken = null;
+    unauthorizedListeners.forEach((listener) => listener());
   }
 
   if (!response.ok) {

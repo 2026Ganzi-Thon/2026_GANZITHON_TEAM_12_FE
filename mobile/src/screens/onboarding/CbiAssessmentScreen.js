@@ -245,7 +245,7 @@ export default function CbiAssessmentScreen({
             style={styles.nextBtn}
             onPress={() => onCompleted(result.onboardingStep || 'LIFESTYLE')}
           >
-            <Text style={styles.nextBtnText}>다음</Text>
+            <Text style={styles.nextBtnText}>{round === 'DAY28' ? '4주 비교 보기' : '다음'}</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

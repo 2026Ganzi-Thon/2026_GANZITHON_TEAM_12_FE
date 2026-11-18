@@ -45,6 +45,9 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
   const [homeData, setHomeData] = useState(null);
   const [dailyHours, setDailyHours] = useState([0, 0, 0, 0, 0, 0, 0]);
   const [actionLoading, setActionLoading] = useState(false);
+  const [approvalMessage, setApprovalMessage] = useState('');
+  const approvalLabel = (result) => result?.status === 'APPROVING'
+    ? '캘린더에 넣는 중이에요' : '캘린더에 넣었어요';
 
   // 409 SLOT_CONFLICT 대체 시간 모달
   const [slotModalVisible, setSlotModalVisible] = useState(false);
@@ -93,10 +96,11 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
     if (actionLoading) return;
     setActionLoading(true);
     try {
-      await apiRequest(`/api/suggestions/${suggestion.id}/approve`, {
+      const result = await apiRequest(`/api/suggestions/${suggestion.id}/approve`, {
         method: 'POST',
         idempotencyKey: generateUuid(),
       });
+      setApprovalMessage(approvalLabel(result));
       await loadHome();
     } catch (err) {
       if (err instanceof ApiError && err.code === 'SLOT_CONFLICT') {
@@ -116,11 +120,12 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
     if (!conflictSuggestion || actionLoading) return;
     setActionLoading(true);
     try {
-      await apiRequest(`/api/suggestions/${conflictSuggestion.id}/approve`, {
+      const result = await apiRequest(`/api/suggestions/${conflictSuggestion.id}/approve`, {
         method: 'POST',
         idempotencyKey: generateUuid(),
         body: { start: slot.start, end: slot.end },
       });
+      setApprovalMessage(approvalLabel(result));
       setSlotModalVisible(false);
       setConflictSuggestion(null);
       await loadHome();
@@ -305,6 +310,12 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
             </Text>
           )}
         </View>
+
+        {approvalMessage ? (
+          <View style={styles.card}>
+            <Text style={styles.cardFootnote} accessibilityLiveRegion="polite">{approvalMessage}</Text>
+          </View>
+        ) : null}
 
         {/* 오늘의 추천 활동 카드 */}
         {primarySuggestion && (

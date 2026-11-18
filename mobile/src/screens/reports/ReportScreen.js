@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import RecoveryGraph from './RecoveryGraph';
+import FourWeekReport from './FourWeekReport';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, ApiError } from '../../api/client';
 
@@ -54,7 +55,8 @@ export function barHeights(weeks) {
 
 export const weekLabel = (idx) => ['이번 주', '다음 주', '3주차', '4주차'][idx] ?? `${idx + 1}주차`;
 
-export default function ReportScreen({ onOpenTerm } = {}) {
+export default function ReportScreen({ onOpenTerm, onOpenSafety } = {}) {
+  const [fourWeekOpen, setFourWeekOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
   const [weeks, setWeeks] = useState([]);
@@ -110,6 +112,12 @@ export default function ReportScreen({ onOpenTerm } = {}) {
     </TouchableOpacity>
   ) : null;
 
+  if (fourWeekOpen) return (
+    <SafeAreaView style={styles.root}>
+      <FourWeekReport onBack={() => setFourWeekOpen(false)} onOpenSafety={onOpenSafety} />
+    </SafeAreaView>
+  );
+
   return (
     <SafeAreaView style={styles.root}>
       {/* 화면이 자기 제목을 그리므로 별도 셸 머리말은 두지 않는다. */}
@@ -124,6 +132,10 @@ export default function ReportScreen({ onOpenTerm } = {}) {
       ) : (
         <ScrollView contentContainerStyle={styles.body}>
           <Text style={styles.title}>회복 리포트</Text>
+          <TouchableOpacity style={styles.card} accessibilityRole="button" onPress={() => setFourWeekOpen(true)}>
+            <Text style={styles.cardTitle}>4주 동안의 변화 보기 →</Text>
+            <Text style={styles.note}>28일차 피로도 재검사와 처음·지금 비교</Text>
+          </TouchableOpacity>
 
           {report?.locked ? (
             <View style={[styles.card, styles.lockedCard]}>

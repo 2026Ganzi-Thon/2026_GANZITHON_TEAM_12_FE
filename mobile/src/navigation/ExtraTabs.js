@@ -62,7 +62,7 @@ export default function ExtraTabs({
     case 'reports':
       return (
         <>
-          <ReportScreen onOpenTerm={(key) => setReportTermKey(key)} />
+          <ReportScreen onOpenTerm={(key) => setReportTermKey(key)} onOpenSafety={onOpenSafety} />
           <TermPopup
             termKey={reportTermKey}
             onClose={() => setReportTermKey(null)}

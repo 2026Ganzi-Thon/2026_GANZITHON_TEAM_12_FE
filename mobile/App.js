@@ -4,6 +4,7 @@ import OnboardingNavigator from './src/navigation/OnboardingNavigator';
 import MainTabNavigator from './src/navigation/MainTabNavigator';
 import ExtraTabs from './src/navigation/ExtraTabs';
 import SafetyScreen from './src/screens/safety/SafetyScreen';
+import { onUnauthorized } from './src/api/client';
 
 function injectWebFonts() {
   if (Platform.OS !== 'web' || typeof document === 'undefined') return;
@@ -71,6 +72,11 @@ export default function App() {
     injectWebFonts();
   }, []);
 
+  useEffect(() => onUnauthorized(() => {
+    setIsOnboardingDone(false);
+    setSafetyOpen(false);
+  }), []);
+
   if (safetyOpen) {
     return <SafetyScreen onBack={() => setSafetyOpen(false)} />;
   }
@@ -85,6 +91,7 @@ export default function App() {
           activeTab={activeTab}
           setActiveTab={setActiveTab}
           homeBaseline={extra?.homeBaseline}
+          todayResult={extra?.todayResult}
           onOpenSafety={() => setSafetyOpen(true)}
           onLoggedOut={() => setIsOnboardingDone(false)}
         />

@@ -30,7 +30,7 @@ const QUALITY_LABEL = { GOOD: '좋음', FAIR: '보통', RETRY: '재측정 필요
 function reasonLabel(suggestion) {
   if (suggestion?.reasonCode === 'OVERLOAD') return '일정 많음';
   if (suggestion?.reasonCode !== 'LOW_RECOVERY') return null;
-  return suggestion.judgmentState === 'NORMAL_LOW' ? '회복 낮음' : '일정 많음 + 회복 낮음';
+  return suggestion.judgmentState === 'OVERLOAD_LOW' ? '일정 많음 + 회복 낮음' : '회복 낮음';
 }
 
 const round1 = (value) => (value == null ? null : Math.round(value * 10) / 10);
@@ -110,7 +110,7 @@ function SuggestionCard({ suggestion, building }) {
     setBusy(true);
     setStatus('');
     try {
-      await apiRequest(`/api/suggestions/${suggestion.id}/${path}`, {
+      const response = await apiRequest(`/api/suggestions/${suggestion.id}/${path}`, {
         method: 'POST',
         body,
         idempotencyKey: generateUuid(),
@@ -118,7 +118,7 @@ function SuggestionCard({ suggestion, building }) {
       if (!mounted.current) return;
       setDone(true);
       setSlots(null);
-      setStatus(label);
+      setStatus(path === 'approve' ? approvedLabel(response) : label);
     } catch (error) {
       if (!mounted.current) return;
       setStatus(error instanceof ApiError ? error.message : '잠시 후 다시 시도해주세요.');
