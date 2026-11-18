@@ -47,8 +47,8 @@ function minutesToHHmm(minutesFromMidnight) {
 
 export default function LifestyleSettingScreen({ onBack, onSaved }) {
   // 기본값: 기상 07:00 (420분), 최소 수면 7시간 30분 (450분)
-  const [wakeMinutes, setWakeMinutes] = useState(420);
-  const [sleepDurationMinutes, setSleepDurationMinutes] = useState(450);
+ const [wakeMinutes, setWakeMinutes] = useState(420);
+const [sleepStartMinutes, setSleepStartMinutes] = useState(1410);
   const [selectedCodes, setSelectedCodes] = useState(['WALK', 'STRETCH', 'MEDITATION']);
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customKeyword, setCustomKeyword] = useState('');
@@ -104,7 +104,7 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
 
     try {
       const sleepEnd = minutesToHHmm(wakeMinutes);
-      const sleepStart = minutesToHHmm(wakeMinutes - sleepDurationMinutes);
+      const sleepStart = minutesToHHmm(sleepStartMinutes);
       const measureTime = minutesToHHmm(wakeMinutes + 15);
 
       const res = await apiRequest('/api/me/settings', {
@@ -174,7 +174,7 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
           </Text>
         </View>
 
-        {/* 최소 수면 시간 스테퍼 카드 */}
+        {/* 취침 시간 스테퍼 카드 */}
         <View style={styles.stepperCard}>
           <View style={styles.stepperHeader}>
             <Text style={styles.stepperLabel}>취침 시간</Text>
@@ -183,16 +183,16 @@ export default function LifestyleSettingScreen({ onBack, onSaved }) {
           <View style={styles.stepperControlRow}>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setSleepDurationMinutes((d) => Math.max(240, d - 10))}
+              onPress={() => setSleepStartMinutes((m) => m - 10)}
             >
               <Text style={styles.circleBtnText}>−</Text>
             </TouchableOpacity>
             <Text style={styles.stepperValue}>
-              {formatDurationKorean(sleepDurationMinutes)}
+              {formatWakeTimeKorean(sleepStartMinutes)}
             </Text>
             <TouchableOpacity
               style={styles.circleBtn}
-              onPress={() => setSleepDurationMinutes((d) => Math.min(720, d + 10))}
+              onPress={() => setSleepStartMinutes((m) => m + 10)}
             >
               <Text style={styles.circleBtnText}>+</Text>
             </TouchableOpacity>
