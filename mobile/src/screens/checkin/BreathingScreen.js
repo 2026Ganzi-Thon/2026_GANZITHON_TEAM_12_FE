@@ -29,7 +29,7 @@ const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 
 
 export default function BreathingScreen({
   baseline,
-  onFinish,
+  onDone,
   onBack,
 }) {
   const validDays = baseline?.validDays ?? 0;

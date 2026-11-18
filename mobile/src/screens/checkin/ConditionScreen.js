@@ -12,7 +12,7 @@ const DISTURBANCES = [
 
 export default function ConditionScreen({
   baseline,
-  onCompleted,
+  onNext,
   onBack,
 }) {
   const validDays = baseline?.validDays ?? 0;
