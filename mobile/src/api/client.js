@@ -1,7 +1,9 @@
 import { Platform } from 'react-native';
 
-// ★ 로컬 UI 프리뷰 검수 시 true / 백엔드 배포용 빌드(dist) 생성 전 반드시 false로 변경!
-const USE_MOCK = true;
+// 목업 스위치. 기본은 꺼짐(실제 API)이라 어디에 배포하든 안전하다.
+// 로컬에서 화면만 볼 때: 환경변수 EXPO_PUBLIC_USE_MOCK 을 참으로 두고 expo 를 띄운다.
+// (BE 저장소 CD 는 목업이 켜진 채로 배포되는 것을 막는다. 이 형태면 그 검사를 그대로 통과한다.)
+const USE_MOCK = process.env.EXPO_PUBLIC_USE_MOCK === 'true';
 
 const API_BASE_URL =
   Platform.OS === 'web'
