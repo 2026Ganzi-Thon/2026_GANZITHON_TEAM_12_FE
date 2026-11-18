@@ -38,6 +38,8 @@ export function generateUuid() {
 // --- 프리뷰용 인메모리 목업 상태 ---
 const mockState = {
   nickname: '유진',
+  hrvConsent: true,
+  conditionScore: null,
   onboardingStep: 'PROFILE',
   suggestions: [
     {
@@ -255,6 +257,139 @@ function handleMockRequest(path, method, body) {
         rmssd: 48.2,
         hr: 68,
       },
+    };
+  }
+
+  // ── B3 측정 탭 진입 · B4 컨디션 · B5 호흡 (명세 6절) ──────────────
+  if (cleanPath === '/api/morning-checks/today') {
+    return {
+      date: new Date().toISOString().slice(0, 10),
+      dayIndex: 3,
+      phase: 'BUILDING',
+      steps: {
+        measurement: { done: false, measurementId: null, qualityLevel: null },
+        condition: { done: false },
+        breathing: { done: false },
+      },
+      baseline: { validDays: 3, required: 7 },
+      result: null,
+    };
+  }
+  if (cleanPath === '/api/morning-checks/today/condition' && method === 'PUT') {
+    mockState.conditionScore = body?.score ?? 3;
+    // 교란 요인을 하나라도 체크하면 '내 평소' 계산에서 빠진다
+    const excluded = Boolean(body?.alcohol || body?.sick || body?.caffeine);
+    return {
+      date: new Date().toISOString().slice(0, 10),
+      phase: 'BUILDING',
+      recovery: { status: 'BUILDING', changePct: null, trendRmssdMs: null, normalRange: null },
+      qualityLevel: 'GOOD',
+      rmssdMs: 41.0,
+      heartRateBpm: 64.0,
+      excludedFromBaseline: excluded,
+      baseline: { validDays: 3, required: 7, established: false, frozen: false },
+      conditionScore: mockState.conditionScore,
+      judgment: 'BUILDING',
+      interpretation: null,
+      suggestions: [{ ...mockState.suggestions[0], type: 'RECOVERY', reasonCode: 'OVERLOAD' }],
+    };
+  }
+  if (cleanPath === '/api/morning-checks/today/breathing' && method === 'POST') {
+    return null;
+  }
+
+  // ── C1 회복 리포트 (명세 7절) ─────────────────────────────────
+  if (cleanPath === '/api/reports/recovery') {
+    return {
+      locked: true,
+      unlock: { requiredDays: 7, validDays: 3 },
+      loadVsUsualPct: 18.0,
+      hrvVsUsualPct: null,
+      recoveryStatus: null,
+      interpretation: null,
+    };
+  }
+  if (cleanPath === '/api/schedule/weeks') {
+    const monday = new Date();
+    monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7));
+    const weekStr = (offsetWeeks) => {
+      const d = new Date(monday.getTime() + offsetWeeks * 7 * 86400000);
+      return d.toISOString().slice(0, 10);
+    };
+    return {
+      weeks: [
+        { weekStart: weekStr(0), loadScore: 52, riskLevel: 'WATCH' },
+        { weekStart: weekStr(1), loadScore: 86, riskLevel: 'RISK' },
+        { weekStart: weekStr(2), loadScore: 52, riskLevel: 'WATCH' },
+        { weekStart: weekStr(3), loadScore: 30, riskLevel: 'NONE' },
+      ],
+    };
+  }
+
+  // ── C3 안전 안내 (명세 9절) ───────────────────────────────────
+  if (cleanPath === '/api/safety') {
+    return {
+      show: true,
+      alerts: [
+        { id: 3, triggerType: 'LOW_RECOVERY_2W', message: '최근 2주 동안 회복이 평소보다 낮게 이어졌어요.' },
+      ],
+      resources: [
+        { id: 'mental-health-crisis-1577-0199', name: '정신건강위기상담', phone: '1577-0199', url: 'https://www.mohw.go.kr' },
+        { id: 'suicide-prevention-109', name: '자살예방상담전화', phone: '109', url: 'https://www.129.go.kr/109' },
+      ],
+      disclaimer: 'Come & Down은 의료 서비스가 아니며 질병 유무를 판단하지 않아요.',
+    };
+  }
+  if (cleanPath.startsWith('/api/safety/alerts/') && cleanPath.endsWith('/acknowledge')) {
+    return null;
+  }
+
+  // ── C2 마이페이지 (명세 8절) ──────────────────────────────────
+  if (cleanPath === '/api/me/settings' && method === 'GET') {
+    return {
+      measureTime: '07:30',
+      sleepStart: '23:00',
+      sleepEnd: '07:00',
+      preferredActivities: ['WALK', 'STRETCH'],
+      hrvEnabled: true,
+    };
+  }
+  if (cleanPath === '/api/me' && method === 'PATCH') {
+    mockState.nickname = body?.nickname || mockState.nickname;
+    return { nickname: mockState.nickname };
+  }
+  if (cleanPath === '/api/me/consents') {
+    if (method === 'POST') {
+      mockState.hrvConsent = true;
+      return null;
+    }
+    return {
+      consents: [
+        { type: 'TERMS', agreed: true, version: '2026-11-01' },
+        { type: 'PRIVACY', agreed: true, version: '2026-11-01' },
+        { type: 'AGE_14', agreed: true, version: '2026-11-01' },
+        { type: 'SENSITIVE_HRV', agreed: mockState.hrvConsent, version: '2026-11-01' },
+        { type: 'CALENDAR', agreed: true, version: '2026-11-01' },
+        { type: 'AI_NOTICE', agreed: true, version: '2026-11-01' },
+      ],
+    };
+  }
+  if (cleanPath.startsWith('/api/me/consents/') && method === 'DELETE') {
+    mockState.hrvConsent = false;
+    return null;
+  }
+  if (cleanPath === '/api/hrv/data' && method === 'DELETE') return null;
+  if (cleanPath === '/api/calendar/connection' && method === 'DELETE') return null;
+
+  // ── B6 추천 다른 시간 보기 (명세 5절) ──────────────────────────
+  if (cleanPath.endsWith('/slots')) {
+    const base = new Date();
+    base.setHours(16, 0, 0, 0);
+    return {
+      slots: [0, 1, 2].map((i) => ({
+        start: new Date(base.getTime() + i * 3600000).toISOString(),
+        end: new Date(base.getTime() + i * 3600000 + 1200000).toISOString(),
+      })),
     };
   }
 
