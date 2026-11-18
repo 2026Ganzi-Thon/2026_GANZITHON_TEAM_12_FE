@@ -99,19 +99,16 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
       });
       await loadHome();
     } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setHomeData({
-          nickname: '사용자',
-          phase: 'BUILDING',
-          recovery: { baseline: { validDays: 0, required: 7 } },
-          todayCheck: { status: 'PENDING' },
-          todaySuggestions: [],
-        });
+      if (err instanceof ApiError && err.code === 'SLOT_CONFLICT') {
+        const res = await apiRequest(`/api/suggestions/${suggestion.id}/slots`).catch(() => null);
+        setConflictSuggestion(suggestion);
+        setAlternativeSlots(res?.slots || []);
+        setSlotModalVisible(true);
       } else {
-        Alert.alert('홈 불러오기 실패', err.message);
+        Alert.alert('일정 추가 실패', err.message);
       }
     } finally {
-      setLoading(false);
+      setActionLoading(false);
     }
   };
 
