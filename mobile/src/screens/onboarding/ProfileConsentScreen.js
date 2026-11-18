@@ -137,9 +137,9 @@ export default function ProfileConsentScreen({ userEmail, initialNickname, onCom
           <Text style={styles.backArrow}>←</Text>
         </TouchableOpacity>
         <View style={styles.progressTrack}>
-          <View style={[styles.progressFill, { width: '100%' }]} />
-        </View>
-        <Text style={styles.stepIndicator}>2 / 2</Text>
+        <View style={[styles.progressFill, { width: '20%' }]} />
+      </View>
+      <Text style={styles.stepIndicator}>1 / 5</Text>
       </View>
 
       <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
@@ -444,7 +444,7 @@ const styles = StyleSheet.create({
   },
   agreeAllSubtitle: {
     fontSize: 12,
-    foweight: '400',
+    fontWeight: '400',
     color: Colors.textSecondary,
     marginTop: 2,
   },
