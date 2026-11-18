@@ -19,13 +19,13 @@ export const IDLE = 'IDLE';
 // ("와이어프레임 수정 요청사항 2" 2장: 시안의 "사유별 문구" 목록은 설명용 주석이라 삭제).
 // guide는 같은 문서 3장의 통일 문구를 쓴다. LOW_FPS는 시안에 없어 임시다(API 사유 4개, 시안 3개).
 const RETRY_REASONS = {
-  NO_PULSE:  { guide: '손가락 끝으로 카메라와 플래시를 함께 가볍게 덮어요', reason: '맥박이 잡히지 않았어요' },
-  TOO_NOISY: { guide: '움직이지 말고 손을 편하게 둔 채 다시 측정해주세요', reason: '잡음·움직임이 컸어요' },
-  TOO_SHORT: { guide: '처음부터 다시 측정해주세요',                      reason: '측정이 중간에 끊겼어요' },
-  LOW_FPS:   { guide: '다른 앱을 닫고 다시 측정해주세요',                 reason: '화면이 느렸어요' },
+  NO_PULSE:  { label: '맥박이 안 잡힘',   guide: '손가락 끝으로 카메라와 플래시를 함께 가볍게 덮어요', reason: '맥박이 잡히지 않았어요' },
+  TOO_NOISY: { label: '잡음·움직임이 큼', guide: '움직이지 말고 손을 편하게 둔 채 다시 측정해주세요', reason: '잡음·움직임이 컸어요' },
+  TOO_SHORT: { label: '측정이 끊김',     guide: '처음부터 다시 측정해주세요',                      reason: '측정이 중간에 끊겼어요' },
+  LOW_FPS:   { label: '화면이 느림',     guide: '다른 앱을 닫고 다시 측정해주세요',                 reason: '화면이 느렸어요' },
 };
 // 서버가 새 사유를 추가해도 화면이 비지 않게 한다.
-const UNKNOWN_REASON = { guide: '손을 편하게 둔 채 다시 측정해주세요', reason: '측정이 잘 되지 않았어요' };
+const UNKNOWN_REASON = { label: '측정 품질 미달', guide: '손을 편하게 둔 채 다시 측정해주세요', reason: '측정이 잘 되지 않았어요' };
 
 // 401·403·409는 측정 화면에서 풀 수 없다 → 담당 화면으로 보낸다 (API.md 0절 "접근 조건").
 // 시안이 없어 제목 + 이동 버튼만 둔다(디자인 요청함).
@@ -49,7 +49,8 @@ const BTN = {
 
 /**
  * 무엇을 그릴지만 고른다 (DOM 없음 → 테스트 가능).
- * chrome: 'full'이면 셸의 머리말·단계·탭을 그대로 두고, 'none'이면 감춘다.
+ * chrome: 셸 노출 범위. none(E1·E2) / steps(E3) / head(B3-9·E5) / full(E4).
+ *         토스트(B3-2)는 시작 화면 위에 얹는 것이라 chrome을 건드리지 않는다.
  * @returns {object|null} 이 파일이 그릴 화면이 아니면 null
  */
 export function pickView(state, detail) {
@@ -57,17 +58,19 @@ export function pickView(state, detail) {
   if (state === HRV_STATES.DONE && detail?.measurement?.retryRequired) {
     const r = RETRY_REASONS[detail.measurement.retryReason] ?? UNKNOWN_REASON;
     return {
-      view: 'RETRY', chrome: 'full',
+      view: 'RETRY', chrome: 'head',
       ring: 'sm', mark: '!',
       title: '다시 측정이 필요해요',
       card: { icon: 'camera.svg', guide: r.guide, reason: r.reason },
+      // 1차 수정본(21번): 사유 목록 대신 "측정 사유" 한 줄만 남았다
+      reasonRow: { label: '측정 사유', text: r.label },
       buttons: [BTN.restart(), BTN.skipToday()],
     };
   }
 
   // B3-2 — 측정 중단. 시작 화면 위에 얹는 토스트라 #state를 비우지 않는다.
   if (state === HRV_STATES.STOPPED) {
-    return { view: 'STOPPED', chrome: 'full', toast: '측정이 중단됐어요. 다시 시작해주세요', buttons: [] };
+    return { view: 'STOPPED', toast: '측정이 중단됐어요. 다시 시작해주세요', buttons: [] };
   }
 
   // E3 — 손가락 대기. 정상 상태지만 화면은 B가 그린다.
@@ -94,7 +97,6 @@ export function pickView(state, detail) {
         title: '밝은 곳에서 측정해주세요',
         lines: ['이 기기는 플래시를 켤 수 없어요. 밝은 창가나 조명 아래에서 재면 더 정확해요.'],
       } : null,
-      figure: '후면 카메라를 손가락 끝으로 가볍게 덮어요',
       bullets: ['세게 누르지 말고 가볍게 대주세요', '1분 동안 편하게 앉아 움직이지 마세요'],
       buttons: [{ action: 'start', label: '측정 시작', kind: 'primary' }],
     };
@@ -137,7 +139,7 @@ export function pickView(state, detail) {
   // E5 — 전송 실패. 데이터가 남아 있어 같은 Idempotency-Key로 재전송한다 (API.md 0절)
   if (error === HRV_ERRORS.UPLOAD_FAILED) {
     return {
-      view: 'UPLOAD_FAILED', chrome: 'full',
+      view: 'UPLOAD_FAILED', chrome: 'head',
       ring: 'xl', icon: 'refresh.svg',
       title: '전송에 실패했어요',
       body: ['측정한 데이터는 그대로 있어요.', '다시 측정하지 않아도 돼요.', '인터넷 연결을 확인해주세요.'],
@@ -148,7 +150,7 @@ export function pickView(state, detail) {
   // 400 — 보낸 값이 잘못됐으니 재전송은 소용없다. 다시 측정만.
   if (error === HRV_ERRORS.INVALID_DATA) {
     return {
-      view: 'UPLOAD_FAILED', chrome: 'full',
+      view: 'UPLOAD_FAILED', chrome: 'head',
       ring: 'xl', icon: 'refresh.svg',
       title: '측정을 다시 해주세요',
       body: ['보낸 값에 문제가 있어서', '이번 측정은 저장되지 않았어요.'],
@@ -194,7 +196,7 @@ export function renderError(root, state, detail, actions = {}) {
     return false;
   }
 
-  document.body.dataset.chrome = v.chrome;
+  if (v.chrome) document.body.dataset.chrome = v.chrome;
 
   // B3-2 — 토스트는 시작 화면 위에 얹는다. #state는 measure.js 것이므로 건드리지 않는다.
   if (v.toast) {
@@ -257,6 +259,16 @@ export function renderError(root, state, detail, actions = {}) {
     box.append(img(v.card.icon, 26, 26));
     card.append(box, el('p', 'err__card-guide', v.card.guide), el('p', 'err__card-reason', v.card.reason));
     root.append(card);
+  }
+
+  // B3-9 측정 사유
+  if (v.reasonRow) {
+    const box = el('div', 'err__reasonrow');
+    box.append(el('p', 'err__reasonrow-label', v.reasonRow.label));
+    const line = el('p', 'err__reasonrow-text');
+    line.append(el('span', 'err__reasonrow-dot'), el('span', null, v.reasonRow.text));
+    box.append(line);
+    root.append(box);
   }
 
   // E3 도움말 카드

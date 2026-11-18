@@ -22,13 +22,31 @@ assert.equal(reasons.size, 4, '사유마다 다른 문구여야 한다');
 // 모르는 사유가 와도 빈 화면이 되면 안 된다
 assert.ok(pickView(DONE, { measurement: { retryRequired: true, retryReason: 'WAT' } }).card.reason);
 
-// B3-2 — 토스트라서 #state를 차지하지 않는다
+// B3-2 — 토스트라서 #state도 셸 노출도 건드리지 않는다
 const stopped = pickView(STOPPED);
 assert.ok(stopped.toast);
-assert.equal(stopped.chrome, 'full');
+assert.equal(stopped.chrome, undefined);
+
+// B3-9 — 1차 수정본의 "측정 사유" 줄. 사유마다 다른 이름이어야 한다
+const labels = new Set();
+for (const reason of ['NO_PULSE', 'TOO_NOISY', 'TOO_SHORT', 'LOW_FPS']) {
+  const v = pickView(DONE, { measurement: { retryRequired: true, retryReason: reason } });
+  assert.equal(v.reasonRow.label, '측정 사유');
+  assert.ok(v.reasonRow.text, `${reason} 사유 이름 없음`);
+  labels.add(v.reasonRow.text);
+}
+assert.equal(labels.size, 4, '사유마다 다른 이름이어야 한다');
+
+// E4 — 1차 수정본에서 [그림] 상자가 빠졌다
+assert.equal(pickView(IDLE, { torch: false }).figure, undefined);
 
 // E1·E2 — 단독으로 서는 화면이라 셸을 감춘다
 assert.equal(pickView(ERROR, { type: HRV_ERRORS.PERMISSION_DENIED }).chrome, 'none');
+// 셸 노출 범위 (1차 수정본 기준)
+assert.equal(pickView(DONE, { measurement: { retryRequired: true } }).chrome, 'head');
+assert.equal(pickView(HRV_STATES.WAITING_FINGER).chrome, 'steps');
+assert.equal(pickView(IDLE, { torch: false }).chrome, 'full');
+assert.equal(pickView(ERROR, { type: HRV_ERRORS.UPLOAD_FAILED }).chrome, 'head');
 assert.equal(pickView(ERROR, { type: HRV_ERRORS.NO_CAMERA }).view, 'UNSUPPORTED');
 
 // http로 열었을 때는 "브라우저를 바꾸세요"가 아니라 https 안내여야 한다

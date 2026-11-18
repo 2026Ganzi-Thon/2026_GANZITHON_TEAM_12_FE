@@ -125,3 +125,12 @@
 /* chrome="steps": 머리말·탭은 감추고 단계 표시만 남긴다 (E3) */
 body[data-chrome="steps"] .m-head,
 body[data-chrome="steps"] .m-tabs { display: none; }
+
+/* B3-9 측정 사유 (1차 수정본) */
+.err__reasonrow {
+  width: 100%; padding: 15px 17px; text-align: left;
+  background: #FAF5EA; border: 1px dashed #E4DDCD; border-radius: var(--cd-radius-card);
+}
+.err__reasonrow-label { margin: 0 0 var(--cd-space-2); font-size: var(--cd-text-label); font-weight: 600; color: var(--cd-ink-mute); }
+.err__reasonrow-text  { display: flex; align-items: center; gap: var(--cd-space-2); margin: 0; font-size: 13px; font-weight: 700; }
+.err__reasonrow-dot   { flex: none; width: 6px; height: 6px; border-radius: 50%; background: var(--cd-warn-ink); }

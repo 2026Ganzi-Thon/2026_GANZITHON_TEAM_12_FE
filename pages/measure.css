@@ -14,10 +14,17 @@
 .m-tabs a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: var(--cd-space-1); font-size: var(--cd-text-label); color: var(--cd-ink-faint); text-decoration: none; }
 .m-tabs [aria-current="page"] { color: var(--cd-ink); font-weight: 600; }
 
-/* E1·E2처럼 단독으로 서는 화면 */
-body[data-chrome="none"] .m-head,
-body[data-chrome="none"] .m-steps,
-body[data-chrome="none"] .m-tabs { display: none; }
+/* 화면마다 셸 노출 범위가 다르다 (1차 수정본 기준)
+   none  E1·E2  — 단독으로 서는 화면
+   steps E3     — 단계 표시만
+   head  B3-9·E5 — 머리말 + 단계, 탭 없음
+   full  E4     — 탭까지 */
+body[data-chrome="none"]  .m-head,
+body[data-chrome="none"]  .m-steps,
+body[data-chrome="none"]  .m-tabs,
+body[data-chrome="steps"] .m-head,
+body[data-chrome="steps"] .m-tabs,
+body[data-chrome="head"]  .m-tabs { display: none; }
 
 /* shell.js가 만드는 요소 */
 .m-head__title { margin: 0; font-size: var(--cd-text-display); font-weight: 700; flex: 1; }
