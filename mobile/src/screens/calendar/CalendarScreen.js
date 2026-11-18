@@ -609,12 +609,7 @@ const styles = StyleSheet.create({
   },
   overloadTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
   aiBadge: {
-    backgroundColor: Colors.surface,
     paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   aiBadgeText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
   overloadMessage: {

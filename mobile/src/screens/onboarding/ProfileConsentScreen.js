@@ -34,7 +34,7 @@ const CONSENT_ITEMS = [
   {
     key: 'SENSITIVE_HRV',
     title: '건강정보 처리 동의',
-    subtitle: '필수 · · 심박 측정값(HRV), 아침 체크 응답, 번아웃 체크 · 영상은 저장하지 않음',
+    subtitle: '필수 · 심박 측정값(HRV), 아침 체크 응답, \n번아웃 체크 · 영상은 저장하지 않음',
   },
   {
     key: 'CALENDAR',
@@ -315,7 +315,7 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: Colors.textPrimary,
-    letterSpacing: -0.6,
+    letterSpacing: -0.4,
     marginBottom: 6,
   },
   subtitle: {
@@ -519,6 +519,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
+    letterSpacing: 0.8,
     marginBottom: 10,
   },
   submitButtonDisabled: {

@@ -561,7 +561,7 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.primary,
     paddingBottom: 4,
   },
-  stepArrow: { fontSize: 12, color: Colors.textMuted },
+  stepArrow: { fontSize: 20, color: Colors.textMuted, marginBottom: 10 },
   stepInactive: { fontSize: 12, color: Colors.textMuted, paddingBottom: 4 },
   scrollBody: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 24 },
   darkToastBanner: {

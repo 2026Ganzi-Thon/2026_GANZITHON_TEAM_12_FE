@@ -26,8 +26,14 @@ function injectWebFonts() {
     }
     @font-face {
       font-family: 'Cafe24ProSlim';
-      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2511-1@1.0/Cafe24PROSlim-Regular.woff2') format('woff2');
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2511-1@1.0/Cafe24PROSlim-Light.woff2') format('woff2');
       font-weight: 400;
+      font-display: swap;
+    }
+    @font-face {
+      font-family: 'Cafe24ProSlim';
+      src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/2511-1@1.0/Cafe24PROSlim-Bold.woff2') format('woff2');
+      font-weight: 600;
       font-display: swap;
     }
     @font-face {
@@ -36,7 +42,7 @@ function injectWebFonts() {
       font-weight: 700;
       font-display: swap;
     }
-    body, input, textarea, button {
+    body, input, textarea, button, div[dir="auto"] {
       font-family: 'Cafe24ProSlim', -apple-system, BlinkMacSystemFont, sans-serif;
     }
   `;

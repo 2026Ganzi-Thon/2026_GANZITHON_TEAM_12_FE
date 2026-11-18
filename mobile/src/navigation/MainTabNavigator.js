@@ -7,9 +7,9 @@ import CategoryEditScreen from '../screens/calendar/CategoryEditScreen';
 import HrvMeasurementScreen from '../screens/checkin/HrvMeasurementScreen';
 
 const TABS = [
-  { key: 'home', label: '홈', icon: '⌂' },
+  { key: 'home', label: '홈', icon: '🏠' },
   { key: 'calendar', label: '캘린더', icon: '📅' },
-  { key: 'checkin', label: '측정', icon: '♡' },
+  { key: 'checkin', label: '측정', icon: '❤' },
   { key: 'reports', label: '리포트', icon: '📊' },
   { key: 'mypage', label: 'MY', icon: '👤' },
 ];

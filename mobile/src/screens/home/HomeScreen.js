@@ -479,7 +479,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  safetyIcon: { fontSize: 15, color: '#9E4B36' },
+  safetyIcon: { fontSize: 20, color: '#9E4B36' },
   safetyTextBox: { flex: 1 },
   safetyAlertTag: { fontSize: 11, fontWeight: '700', color: '#B8543A', marginBottom: 2 },
   safetyAlertTitle: { fontSize: 14, fontWeight: '700', color: Colors.textPrimary },
@@ -516,12 +516,8 @@ const styles = StyleSheet.create({
   },
   suggestionTitle: { fontSize: 13, fontWeight: '700', color: Colors.textPrimary },
   aiTag: {
-    backgroundColor: Colors.surface,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 6,
-    borderWidth: 1,
-    borderColor: Colors.border,
   },
   aiTagText: { fontSize: 10, fontWeight: '700', color: Colors.textSecondary },
   suggestionInnerBox: {
