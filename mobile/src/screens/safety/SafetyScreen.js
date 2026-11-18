@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Linking,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest } from '../../api/client';
 
@@ -103,7 +104,7 @@ export default function SafetyScreen({ onBack }) {
                 accessibilityRole="button"
               >
                 <View style={styles.rowIcon}>
-                  <Text style={styles.rowIconText}>☎</Text>
+                  <Ionicons name="call-outline" size={18} color={Colors.primary} />
                 </View>
                 <View style={styles.rowTexts}>
                   <Text style={styles.rowTitle}>{resource.name}</Text>
@@ -123,7 +124,7 @@ export default function SafetyScreen({ onBack }) {
                 onPress={() => Linking.openURL(SCHOOL_COUNSELING_URL).catch(() => {})}
               >
                 <View style={[styles.rowIcon, styles.rowIconWarm]}>
-                  <Text style={styles.rowIconText}>🏫</Text>
+                  <Ionicons name="school-outline" size={18} color={Colors.warningText} />
                 </View>
                 <View style={styles.rowTexts}>
                   <Text style={styles.rowTitle}>학교 상담센터 찾아보기</Text>
@@ -207,7 +208,6 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surfaceAccent,
   },
   rowIconWarm: { backgroundColor: Colors.warningBg },
-  rowIconText: { fontSize: 16 },
   rowTexts: { flex: 1 },
   rowTitle: { fontFamily: Fonts.body, fontSize: 15, fontWeight: '700', color: Colors.textPrimary },
   rowSub: { fontFamily: Fonts.body, fontSize: 13, color: Colors.textSecondary, marginTop: 2 },

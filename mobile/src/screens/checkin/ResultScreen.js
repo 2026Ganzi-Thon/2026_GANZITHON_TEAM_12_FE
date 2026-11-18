@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
   Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, ApiError, generateUuid } from '../../api/client';
 import TermPopup from '../../components/TermPopup';
@@ -131,7 +132,7 @@ function SuggestionCard({ suggestion, building }) {
         <Text style={[styles.reason, !building && styles.reasonBox]}>{reasonText}</Text>
       ) : null}
       <View style={styles.when}>
-        <View style={styles.walkIcon}><Text style={styles.walkText}>🚶</Text></View>
+        <View style={styles.walkIcon}><Ionicons name="walk-outline" size={20} color={Colors.primary} /></View>
         <View style={styles.whenTexts}>
           <Text style={styles.slotTitle}>{slotLabel(suggestion)}</Text>
           <Text style={styles.hint}>승인 시 구글 캘린더에 반영</Text>
@@ -371,7 +372,6 @@ const styles = StyleSheet.create({
   reasonBox: { paddingVertical: 11, paddingHorizontal: 12, backgroundColor: Colors.warningBg, color: Colors.warningText, borderRadius: 12 },
   when: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 13, borderTopWidth: 1, borderTopColor: Colors.border },
   walkIcon: { width: 36, height: 36, borderRadius: 12, backgroundColor: Colors.surfaceAccent, alignItems: 'center', justifyContent: 'center' },
-  walkText: { fontSize: 18, color: Colors.primary },
   whenTexts: { flex: 1, gap: 2 },
   slotTitle: { fontFamily: Fonts.body, fontSize: 18, fontWeight: '700', color: Colors.textPrimary },
   actions: { flexDirection: 'row', gap: 8 },

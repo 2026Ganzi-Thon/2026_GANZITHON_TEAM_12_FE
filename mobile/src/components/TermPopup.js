@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Modal, TouchableOpacity, StyleSheet, Pressable } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../theme/tokens';
 import { findTerm } from '../data/glossary';
 
@@ -43,7 +44,8 @@ export default function TermPopup({ termKey, chip, onClose, onOpenGlossary }) {
                   }}
                   accessibilityRole="button"
                 >
-                  <Text style={styles.moreText}>📖  마이페이지 용어 사전 보기</Text>
+                  <Ionicons name="book-outline" size={16} color={Colors.primary} />
+                  <Text style={styles.moreText}>마이페이지 용어 사전 보기</Text>
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -103,6 +105,9 @@ const styles = StyleSheet.create({
   title: { fontFamily: Fonts.display, fontSize: 19, fontWeight: '700', lineHeight: 26, color: Colors.textPrimary },
   desc: { fontFamily: Fonts.body, fontSize: 14, lineHeight: 24, color: Colors.textSecondary, marginTop: 12 },
   more: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
     minHeight: 48,
     marginTop: 20,
     borderRadius: 12,

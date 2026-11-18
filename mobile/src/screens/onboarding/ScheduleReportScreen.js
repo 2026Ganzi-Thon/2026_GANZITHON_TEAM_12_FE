@@ -10,6 +10,7 @@ import {
   Alert,
   Modal,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
@@ -377,7 +378,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
 
                 {suggestions.map((s) => (
                   <View key={s.id} style={styles.suggestionItem}>
-                    <Text style={styles.suggestionIcon}>📅</Text>
+                    <Ionicons name="calendar-outline" size={14} color={Colors.textSecondary} style={styles.suggestionIcon} />
                     <View style={styles.suggestionContent}>
                       <Text style={styles.suggestionMessage}>
                         {s.message?.text || `${s.title} 일정을 미리 넣어둘까요?`}
@@ -409,7 +410,8 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
               onPress={handleApproveSuggestions}
               disabled={actionLoading}
             >
-              <Text style={styles.addCalendarBtnText}>📅 캘린더에 추가</Text>
+              <Ionicons name="calendar-outline" size={15} color={Colors.primary} />
+              <Text style={styles.addCalendarBtnText}>캘린더에 추가</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -609,7 +611,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-start',
     marginBottom: 6,
   },
-  suggestionIcon: { fontSize: 14, marginRight: 8, marginTop: 2 },
+  suggestionIcon: { marginRight: 8, marginTop: 2 },
   suggestionContent: { flex: 1 },
   suggestionMessage: { fontSize: 13, color: Colors.textPrimary, lineHeight: 20 },
   suggestionApprovedTag: {

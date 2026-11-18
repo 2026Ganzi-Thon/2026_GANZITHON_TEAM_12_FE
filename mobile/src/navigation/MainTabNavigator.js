@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../theme/tokens';
 import HomeScreen from '../screens/home/HomeScreen';
 import CalendarScreen from '../screens/calendar/CalendarScreen';
 import CategoryEditScreen from '../screens/calendar/CategoryEditScreen';
 import HrvMeasurementScreen from '../screens/checkin/HrvMeasurementScreen';
 
+// 선택된 탭은 채운 모양, 나머지는 선 모양을 쓴다.
 const TABS = [
-  { key: 'home', label: '홈', icon: '🏠' },
-  { key: 'calendar', label: '캘린더', icon: '📅' },
-  { key: 'checkin', label: '측정', icon: '❤' },
-  { key: 'reports', label: '리포트', icon: '📊' },
-  { key: 'mypage', label: 'MY', icon: '👤' },
+  { key: 'home', label: '홈', icon: 'home-outline', iconActive: 'home' },
+  { key: 'calendar', label: '캘린더', icon: 'calendar-outline', iconActive: 'calendar' },
+  { key: 'checkin', label: '측정', icon: 'heart-outline', iconActive: 'heart' },
+  { key: 'reports', label: '리포트', icon: 'bar-chart-outline', iconActive: 'bar-chart' },
+  { key: 'mypage', label: 'MY', icon: 'person-outline', iconActive: 'person' },
 ];
 
 export default function MainTabNavigator({
@@ -104,9 +106,12 @@ export default function MainTabNavigator({
                 style={styles.tabItem}
                 onPress={() => setActiveTab(tab.key)}
               >
-                <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-                  {tab.icon}
-                </Text>
+                <Ionicons
+                  name={focused ? tab.iconActive : tab.icon}
+                  size={22}
+                  color={focused ? Colors.primary : Colors.textMuted}
+                  style={styles.tabIcon}
+                />
                 <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
                   {tab.label}
                 </Text>
@@ -137,8 +142,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  tabIcon: { fontSize: 17, color: Colors.textMuted, marginBottom: 2 },
-  tabIconFocused: { color: Colors.primary },
+  tabIcon: { marginBottom: 2 },
   tabLabel: { fontSize: 11, color: Colors.textMuted, fontWeight: '500' },
   tabLabelFocused: { color: Colors.primary, fontWeight: '700' },
 });

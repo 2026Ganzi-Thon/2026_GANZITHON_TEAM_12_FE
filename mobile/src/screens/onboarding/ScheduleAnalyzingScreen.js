@@ -9,6 +9,7 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, AuthUrls, refreshCsrfToken, ApiError } from '../../api/client';
 
@@ -108,7 +109,7 @@ export default function ScheduleAnalyzingScreen({
         {/* 원형 캘린더 아이콘 영역 */}
         <View style={styles.pulseCircle}>
           <View style={styles.calendarIconBox}>
-            <Text style={styles.calendarIconText}>📅</Text>
+            <Ionicons name="calendar-outline" size={24} color={Colors.primary} />
           </View>
         </View>
 
@@ -247,7 +248,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  calendarIconText: { fontSize: 24 },
   title: {
     fontSize: 23,
     fontWeight: '700',

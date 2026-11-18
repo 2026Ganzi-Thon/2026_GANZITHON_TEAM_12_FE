@@ -10,6 +10,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
 import { createHrvMeasurement } from '../../utils/hrvMeasurement';
 
@@ -278,7 +279,7 @@ export default function HrvMeasurementScreen({
             <View style={styles.detectedBadge}>
               <Text style={styles.detectedBadgeText}>✓ 손가락 감지됨</Text>
             </View>
-            <Text style={styles.cameraIcon}>📷</Text>
+            <Ionicons name="camera-outline" size={28} color={Colors.textMuted} style={styles.cameraIcon} />
             <Text style={styles.cameraGuideTitle}>카메라 화면 (손가락 감지됨)</Text>
             <Text style={styles.cameraGuideSub}>손가락을 카메라에 대고 움직이지 마세요</Text>
           </View>
@@ -491,7 +492,7 @@ export default function HrvMeasurementScreen({
         )}
 
         <View style={styles.guidePreviewBox}>
-          <Text style={styles.cameraIcon}>📷</Text>
+          <Ionicons name="camera-outline" size={28} color={Colors.textMuted} style={styles.cameraIcon} />
           <Text style={styles.guidePreviewText}>
             후면 카메라와 플래시를 손가락 끝으로 함께 가볍게 덮어요
           </Text>
@@ -526,7 +527,7 @@ export default function HrvMeasurementScreen({
         <View style={styles.modalBackdrop}>
           <View style={styles.permissionCard}>
             <View style={styles.permIconCircle}>
-              <Text style={styles.permIcon}>📷</Text>
+              <Ionicons name="camera-outline" size={18} color={Colors.primary} />
             </View>
             <Text style={styles.permTitle}>카메라 사용을 허용해 주세요</Text>
             <Text style={styles.permBody}>
@@ -609,7 +610,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 28,
     marginBottom: 14,
   },
-  cameraIcon: { fontSize: 28, marginBottom: 10, opacity: 0.6 },
+  cameraIcon: { marginBottom: 10, opacity: 0.6 },
   guidePreviewText: {
     fontSize: 13,
     color: Colors.textSecondary,
@@ -658,7 +659,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     marginBottom: 12,
   },
-  permIcon: { fontSize: 18 },
   permTitle: { fontSize: 17, fontWeight: '700', color: Colors.textPrimary, marginBottom: 8 },
   permBody: { fontSize: 13, color: Colors.textSecondary, lineHeight: 20, marginBottom: 14 },
   permBold: { fontWeight: '700', color: Colors.textPrimary },
