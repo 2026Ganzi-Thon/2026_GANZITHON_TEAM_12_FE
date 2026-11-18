@@ -74,14 +74,15 @@ export default function App() {
       <MainTabNavigator
         onOpenSafety={() => setSafetyOpen(true)}
         onBackToOnboarding={() => setIsOnboardingDone(false)}
-        renderExtraTabs={(activeTab, setActiveTab) => (
-          <ExtraTabs
-            activeTab={activeTab}
-            setActiveTab={setActiveTab}
-            onOpenSafety={() => setSafetyOpen(true)}
-            onLoggedOut={() => setIsOnboardingDone(false)}
-          />
-        )}
+        renderExtraTabs={(activeTab, setActiveTab, extra) => (
+        <ExtraTabs
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          homeBaseline={extra?.homeBaseline}
+          onOpenSafety={() => setSafetyOpen(true)}
+          onLoggedOut={() => setIsOnboardingDone(false)}
+        />
+      )}
       />
     );
   }

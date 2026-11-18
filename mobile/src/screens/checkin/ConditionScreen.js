@@ -10,7 +10,13 @@ const DISTURBANCES = [
   { key: 'caffeine', label: '측정 직전에 카페인을 마셨어요' },
 ];
 
-export default function ConditionScreen({ onBack, onNext }) {
+export default function ConditionScreen({
+  baseline,
+  onCompleted,
+  onBack,
+}) {
+  const validDays = baseline?.validDays ?? 0;
+  const requiredDays = baseline?.required ?? 7;
   const [score, setScore] = useState(null);
   const [disturbances, setDisturbances] = useState({ alcohol: false, sick: false, caffeine: false });
   const [submitting, setSubmitting] = useState(false);
@@ -54,7 +60,9 @@ export default function ConditionScreen({ onBack, onNext }) {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>아침 1분 체크</Text>
         <View style={styles.chip}>
-          <Text style={styles.chipText}>기준선 만드는 중 <Text style={styles.chipValue}>3/7</Text></Text>
+          <Text style={styles.statusPillText}>
+            기준선 만드는 중 {validDays}/{requiredDays}
+          </Text>
         </View>
       </View>
       <View style={styles.steps} accessibilityLabel="측정 단계">

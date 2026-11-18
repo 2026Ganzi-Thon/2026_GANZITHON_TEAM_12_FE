@@ -94,7 +94,7 @@ export default function MainTabNavigator({
           activeTab !== 'calendar' &&
           activeTab !== 'checkin' &&
           renderExtraTabs &&
-          renderExtraTabs(activeTab, setActiveTab, { latestMeasurement })}
+          renderExtraTabs(activeTab, setActiveTab, { latestMeasurement, homeBaseline })}
       </View>
 
       {/* 하단 탭 바 */}

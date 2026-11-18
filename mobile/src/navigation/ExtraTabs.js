@@ -5,6 +5,7 @@ import ResultScreen from '../screens/checkin/ResultScreen';
 import ReportScreen from '../screens/reports/ReportScreen';
 import MyPageScreen from '../screens/mypage/MyPageScreen';
 import GlossaryScreen from '../screens/glossary/GlossaryScreen';
+import TermPopup from '../components/TermPopup';
 
 /**
  * MainTabNavigator 가 home·calendar·checkin 말고 다른 탭을 만났을 때 그리는 화면들.
@@ -14,13 +15,21 @@ import GlossaryScreen from '../screens/glossary/GlossaryScreen';
  * 결과 값(TodayResult)은 컨디션 저장 응답으로 받아 결과 화면까지 들고 간다.
  * 호흡은 건너뛸 수 있어서 결과 계산은 컨디션 저장 시점이다(API 명세 6절).
  */
-export default function ExtraTabs({ activeTab, setActiveTab, onOpenSafety, onLoggedOut }) {
+export default function ExtraTabs({
+  activeTab,
+  setActiveTab,
+  homeBaseline,
+  onOpenSafety,
+  onLoggedOut,
+}) {
   const [todayResult, setTodayResult] = useState(null);
+  const [reportTermKey, setReportTermKey] = useState(null);
 
   switch (activeTab) {
     case 'condition_check':
       return (
         <ConditionScreen
+          baseline={homeBaseline}
           onBack={() => setActiveTab('checkin')}
           onNext={(result) => {
             setTodayResult(result);
@@ -30,7 +39,12 @@ export default function ExtraTabs({ activeTab, setActiveTab, onOpenSafety, onLog
       );
 
     case 'breathing':
-      return <BreathingScreen onDone={() => setActiveTab('today_result')} />;
+      return (
+        <BreathingScreen
+          baseline={homeBaseline}
+          onDone={() => setActiveTab('today_result')}
+        />
+      );
 
     case 'today_result':
       return (
@@ -45,7 +59,16 @@ export default function ExtraTabs({ activeTab, setActiveTab, onOpenSafety, onLog
       );
 
     case 'reports':
-      return <ReportScreen />;
+      return (
+        <>
+          <ReportScreen onOpenTerm={(key) => setReportTermKey(key)} />
+          <TermPopup
+            termKey={reportTermKey}
+            onClose={() => setReportTermKey(null)}
+            onOpenGlossary={() => setActiveTab('glossary')}
+          />
+        </>
+      );
 
     case 'mypage':
       return (

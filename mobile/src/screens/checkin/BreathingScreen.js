@@ -27,7 +27,13 @@ export function phaseAt(elapsed) {
 
 const fmt = (s) => `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 
-export default function BreathingScreen({ onDone }) {
+export default function BreathingScreen({
+  baseline,
+  onFinish,
+  onBack,
+}) {
+  const validDays = baseline?.validDays ?? 0;
+  const requiredDays = baseline?.required ?? 7;
   const [elapsed, setElapsed] = useState(0);
   const [finishing, setFinishing] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(null);
@@ -123,7 +129,9 @@ export default function BreathingScreen({ onDone }) {
       <View style={styles.header}>
         <Text style={styles.headerTitle}>아침 1분 체크</Text>
         <View style={styles.chip}>
-          <Text style={styles.chipText}>기준선 만드는 중 <Text style={styles.chipValue}>3/7</Text></Text>
+          <Text style={styles.statusPillText}>
+            기준선 만드는 중 {validDays}/{requiredDays}
+          </Text>
         </View>
       </View>
       <View style={styles.steps} accessibilityLabel="측정 단계">
