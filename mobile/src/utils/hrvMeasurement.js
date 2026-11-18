@@ -358,7 +358,7 @@ export function createHrvMeasurement(options = {}) {
     let rawStatus = 'OK';
     if (rAvg < 120) {
       rawStatus = 'TOO_DARK';
-    } else if (gAvg === 0 || rAvg / gAvg < 2.5) {
+    } else if (rAvg < 2.5 * gAvg) {
       rawStatus = 'NO_FINGER';
     } else if (rAvg >= 250) {
       rawStatus = 'TOO_BRIGHT';

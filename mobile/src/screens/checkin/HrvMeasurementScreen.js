@@ -64,6 +64,26 @@ export default function HrvMeasurementScreen({
 
   const handleEngineError = useCallback((err) => {
     sessionActiveRef.current = false;
+    const errCode = err?.code || err?.detail?.code;
+
+    if (err?.code === 'ONBOARDING_REQUIRED') {
+      setPhase('IDLE');
+      setBannerMessage('온보딩 설정을 먼저 완료해 주세요.');
+      return;
+    }
+
+    if (err?.code === 'HRV_CONSENT_REQUIRED') {
+      setPhase('IDLE');
+      setBannerMessage('건강정보(HRV) 처리 동의가 필요해요. 마이페이지에서 동의를 켜주세요.');
+      return;
+    }
+
+    if (err?.code === 'HRV_DISABLED') {
+      setPhase('IDLE');
+      setBannerMessage('HRV 측정 기능이 비활성화되어 있어요. 마이페이지 설정에서 켜주세요.');
+      return;
+    }
+
     if (err?.retryable) {
       setPhase('RETRY_NETWORK');
       setBannerMessage('네트워크 연결이 불안정해요. 측정 데이터는 안전하게 보관 중이에요.');
@@ -103,6 +123,7 @@ export default function HrvMeasurementScreen({
               INSECURE_CONTEXT: 'HTTPS 보안 연결에서만 카메라 측정이 가능해요.',
               CAMERA_UNAVAILABLE: '사용 가능한 후면 카메라를 찾을 수 없어요.',
               UPLOAD_FAILED: '측정 결과 전송에 실패했어요. 네트워크를 확인해 주세요.',
+              AUTH_REQUIRED: '로그인이 필요하거나 권한이 없어요. 다시 로그인해 주세요.',
             };
             handleEngineError(
               detail || {
