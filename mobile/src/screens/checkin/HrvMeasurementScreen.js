@@ -76,58 +76,73 @@ export default function HrvMeasurementScreen({
   // 엔진 인스턴스 초기화 및 언마운트 정리
   useEffect(() => {
     const engine = createHrvMeasurement({
-      onStateChange: (nextState) => {
+      credentials: 'include',
+      onStateChange: (nextState, payload, detail) => {
         if (!sessionActiveRef.current) return;
-        const stateMap = {
-          idle: 'IDLE',
-          waiting_finger: 'WAITING_FINGER',
-          preparing: 'PREPARING',
-          measuring: 'MEASURING',
-          uploading: 'ANALYZING',
-          done: 'ANALYZING',
-        };
-        const mapped = stateMap[nextState];
-        if (mapped) {
-          setPhase(mapped);
+
+        switch (nextState) {
+          case 'WAITING_FINGER':
+            setElapsedSec(0);
+            setPhase('WAITING_FINGER');
+            break;
+          case 'WARMUP':
+            setPhase('PREPARING');
+            break;
+          case 'MEASURING':
+            setPhase('MEASURING');
+            break;
+          case 'UPLOADING':
+            setPhase('ANALYZING');
+            break;
+          case 'DONE':
+            handleEngineResult(payload);
+            break;
+          case 'ERROR': {
+            const errorMessages = {
+              PERMISSION_DENIED: '카메라 권한이 거부되었어요. 브라우저 설정에서 허용해 주세요.',
+              INSECURE_CONTEXT: 'HTTPS 보안 연결에서만 카메라 측정이 가능해요.',
+              CAMERA_UNAVAILABLE: '사용 가능한 후면 카메라를 찾을 수 없어요.',
+              UPLOAD_FAILED: '측정 결과 전송에 실패했어요. 네트워크를 확인해 주세요.',
+            };
+            handleEngineError(
+              detail || {
+                message: errorMessages[payload] || '카메라 측정 중 오류가 발생했어요.',
+              }
+            );
+            break;
+          }
+          default:
+            break;
         }
       },
-      onTick: ({ elapsedMs }) => {
+      onProgress: ({ elapsedMs }) => {
         if (!sessionActiveRef.current) return;
         setElapsedSec(Math.floor(elapsedMs / 1000));
       },
-      onSignal: ({ status, r }) => {
+      onSignal: ({ finger, moving, wave }) => {
         if (!sessionActiveRef.current) return;
-        const signalMap = {
-          ok: 'OK',
-          no_finger: 'NO_FINGER',
-          too_dark: 'TOO_DARK',
-          too_bright: 'TOO_BRIGHT',
-          motion: 'MOTION',
-        };
-        setFingerStatus(signalMap[status] || 'OK');
-        if (typeof r === 'number') {
+
+        if (finger && finger !== 'OK') {
+          setFingerStatus(finger);
+        } else if (moving) {
+          setFingerStatus('MOTION');
+        } else {
+          setFingerStatus('OK');
+        }
+
+        if (typeof wave === 'number') {
           setWaveSamples((prev) => {
-            const normalized = Math.min(1, Math.max(0.15, ((r % 10) / 10) * 0.7 + 0.2));
+            const normalized = Math.min(1, Math.max(0.15, 0.5 + wave / 12));
             return [...prev.slice(1), normalized];
           });
         }
       },
-      onReset: (reason) => {
-        if (!sessionActiveRef.current) return;
-        setElapsedSec(0);
-        if (reason === 'NO_FINGER_TIMEOUT') {
-          setBannerMessage('손가락이 떨어져서 처음부터 다시 측정해요');
-        }
-      },
-      onResult: handleEngineResult,
-      onError: handleEngineError,
     });
 
     engineRef.current = engine;
 
     return () => {
       sessionActiveRef.current = false;
-      // 엔진이 내보내는 이름은 stop 이다(abort 는 없다). 측정 중이 아니면 stop 은 바로 빠져나온다.
       engine.stop();
     };
   }, [handleEngineResult, handleEngineError]);
@@ -138,24 +153,21 @@ export default function HrvMeasurementScreen({
     setElapsedSec(0);
 
     if (Platform.OS === 'web' && typeof navigator !== 'undefined' && navigator.mediaDevices) {
-      try {
-        sessionActiveRef.current = true;
-        const info = await engineRef.current.start();
-        setTorchSupported(Boolean(info?.torch));
-      } catch (err) {
-        sessionActiveRef.current = false;
-        setTorchSupported(false);
-        Alert.alert('카메라 권한 필요', '설정에서 카메라 접근을 허용해 주세요.');
-      }
+      sessionActiveRef.current = true;
+      await engineRef.current.start();
+      const info = engineRef.current.getCollectedData();
+      setTorchSupported(Boolean(info?.torch));
     } else {
+      // 네이티브/시뮬레이터 폴백 흐름
       sessionActiveRef.current = true;
       setPhase('WAITING_FINGER');
     }
   };
 
+  // 3. 측정 중단
   const handleAbort = () => {
     sessionActiveRef.current = false;
-    engineRef.current?.abort();
+    engineRef.current?.stop();
     setElapsedSec(0);
     setPhase('IDLE');
     setBannerMessage('측정이 중단됐어요. 다시 시작해주세요');
