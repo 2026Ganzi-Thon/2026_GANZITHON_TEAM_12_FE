@@ -7,9 +7,9 @@ import {
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest, generateUuid } from '../../api/client';
 
 const LEVEL_LABELS = {
@@ -47,7 +47,7 @@ export default function CbiAssessmentScreen({
         }
         setShuffledItems(itemsCopy);
       } catch (err) {
-        Alert.alert('문항 불러오기 실패', err.message);
+        showAlert('문항 불러오기 실패', err.message);
       } finally {
         if (mounted) setLoading(false);
       }
@@ -101,7 +101,7 @@ export default function CbiAssessmentScreen({
       });
       setResult(res);
     } catch (err) {
-      Alert.alert('제출 오류', err.message);
+      showAlert('제출 오류', err.message);
     } finally {
       setSubmitting(false);
     }

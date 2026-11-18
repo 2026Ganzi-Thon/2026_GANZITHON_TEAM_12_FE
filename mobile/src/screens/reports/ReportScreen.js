@@ -57,20 +57,24 @@ export default function ReportScreen({ onOpenTerm } = {}) {
   const [loading, setLoading] = useState(true);
   const [report, setReport] = useState(null);
   const [weeks, setWeeks] = useState([]);
+  // 부하 값이 비었을 때 "캘린더를 연결하세요" 인지 "자료가 부족해요" 인지 가른다.
+  const [calendarConnected, setCalendarConnected] = useState(null);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        const [recovery, schedule] = await Promise.all([
+        const [recovery, schedule, me] = await Promise.all([
           apiRequest('/api/reports/recovery?days=14'),
-          // 주차 조회 실패는 회복 리포트 전체를 막지 않는다.
+          // 주차 조회·내 정보 실패는 회복 리포트 전체를 막지 않는다.
           apiRequest(`/api/schedule/weeks?from=${mondayOf()}&count=4`).catch(() => null),
+          apiRequest('/api/me').catch(() => null),
         ]);
         if (alive) {
           setReport(recovery);
           setWeeks(schedule?.weeks ?? []);
+          setCalendarConnected(me ? Boolean(me.calendar?.connected) : null);
         }
       } catch (e) {
         if (alive) {
@@ -155,7 +159,12 @@ export default function ReportScreen({ onOpenTerm } = {}) {
             </View>
             <Text style={[styles.value, styles.loadValue]}>{loadPct == null ? '—' : signed(loadPct)}</Text>
             {loadPct == null ? (
-              <Text style={[styles.note, styles.valueNote]}>캘린더를 연결하면 알려드려요</Text>
+              // 캘린더가 연결돼 있어도 비교할 지난 일정이 모자라면 null 이 온다.
+              <Text style={[styles.note, styles.valueNote]}>
+                {calendarConnected === false
+                  ? '캘린더를 연결하면 알려드려요'
+                  : '비교할 일정이 아직 부족해요'}
+              </Text>
             ) : null}
           </View>
 

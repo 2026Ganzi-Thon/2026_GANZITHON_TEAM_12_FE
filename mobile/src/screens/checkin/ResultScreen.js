@@ -22,8 +22,16 @@ import { findTerm } from '../../data/glossary';
  */
 const RECOVERY_LABEL = { LOW: '낮음', NORMAL: '평소 범위', INSUFFICIENT: '측정 부족', BUILDING: '기준선 만드는 중' };
 const QUALITY_LABEL = { GOOD: '좋음', FAIR: '보통', RETRY: '재측정 필요', UNVERIFIED: '참고용' };
-// 추천 이유. 1~7일차에는 회복을 판단할 수 없어 일정만 근거다 ("수정 요청사항 2" 1-8).
-const REASON_LABEL = { OVERLOAD: '일정 많음', LOW_RECOVERY: '일정 많음 + 회복 낮음' };
+/**
+ * 추천 이유. 1~7일차에는 회복을 판단할 수 없어 일정만 근거다 ("수정 요청사항 2" 1-8).
+ * LOW_RECOVERY 는 judgmentState 로 갈린다 — 일정도 많으면 OVERLOAD_LOW,
+ * 일정은 보통인데 회복만 낮으면 NORMAL_LOW 다.
+ */
+function reasonLabel(suggestion) {
+  if (suggestion?.reasonCode === 'OVERLOAD') return '일정 많음';
+  if (suggestion?.reasonCode !== 'LOW_RECOVERY') return null;
+  return suggestion.judgmentState === 'NORMAL_LOW' ? '회복 낮음' : '일정 많음 + 회복 낮음';
+}
 
 const round1 = (value) => (value == null ? null : Math.round(value * 10) / 10);
 // 날짜만 있는 값은 기기 시간대에 따라 전날로 바뀌지 않도록 날짜 구성요소로 만든다.
@@ -91,6 +99,10 @@ function SuggestionCard({ suggestion, building }) {
     }
   };
 
+  // 승인 응답이 202(status: APPROVING)면 아직 구글 등록을 확인하는 중이다 (API 명세 5절).
+  const approvedLabel = (res) =>
+    res?.status === 'APPROVING' ? '구글 캘린더에 넣는 중이에요' : '구글 캘린더에 넣었어요';
+
   const act = async (path, label, body) => {
     // 연속 탭과 대체 시간 선택 중 중복 승인을 함께 막는다.
     if (pending.current || done) return;
@@ -120,7 +132,7 @@ function SuggestionCard({ suggestion, building }) {
     }
   };
 
-  const reasonText = [REASON_LABEL[suggestion.reasonCode], suggestion.title].filter(Boolean).join(' · ');
+  const reasonText = [reasonLabel(suggestion), suggestion.title].filter(Boolean).join(' · ');
 
   return (
     <View style={[styles.card, styles.suggestion]}>

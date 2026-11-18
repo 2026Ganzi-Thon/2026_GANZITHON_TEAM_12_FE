@@ -8,12 +8,13 @@ import {
   StyleSheet,
   SafeAreaView,
   Modal,
-  Alert,
   Linking,
+  Platform,
   ActivityIndicator,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, AuthUrls } from '../../api/client';
+import { showAlert, showConfirm } from '../../utils/dialog';
 
 /**
  * C2 마이페이지 (API 명세 8절)
@@ -113,10 +114,7 @@ export default function MyPageScreen({ onOpenSafety, onOpenGlossary, onLoggedOut
   };
 
   const confirm = (message, onYes) =>
-    Alert.alert('확인', message, [
-      { text: '취소', style: 'cancel' },
-      { text: '계속', style: 'destructive', onPress: onYes },
-    ]);
+    showConfirm('확인', message, onYes, { confirmText: '계속', destructive: true });
 
   const hrvConsent = consents.find((c) => c.type === 'SENSITIVE_HRV');
   const calendarConnected = Boolean(me?.calendar?.connected);
@@ -272,7 +270,8 @@ export default function MyPageScreen({ onOpenSafety, onOpenGlossary, onLoggedOut
           style={styles.ghostButton}
           onPress={() => {
             if (!calendarConnected) {
-              Linking.openURL(AuthUrls.googleCalendar).catch(() => {});
+              if (Platform.OS === 'web') window.location.href = AuthUrls.googleCalendar;
+              else Linking.openURL(AuthUrls.googleCalendar).catch(() => {});
               return;
             }
             run(() => apiRequest('/api/calendar/connection', { method: 'DELETE' }));

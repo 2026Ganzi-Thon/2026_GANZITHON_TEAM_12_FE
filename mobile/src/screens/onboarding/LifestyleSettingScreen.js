@@ -7,10 +7,10 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest } from '../../api/client';
 
 // 백엔드 등록 표준 활동 코드 매핑
@@ -60,20 +60,20 @@ const [sleepStartMinutes, setSleepStartMinutes] = useState(1410);
     );
   };
 
-  // 미등록 코드 전송(400) 방지를 위해 유사 표준 코드로 매핑 안내
+  // 백엔드가 받는 활동 코드는 6개뿐이다. 그 밖의 코드를 넣으면 저장할 때
+  // 400 "알 수 없는 활동이 있어요." 가 나고, 칩으로 보이지 않아 사용자가
+  // 해제할 수도 없어서 온보딩에서 못 넘어간다. 그래서 6개로만 매핑한다.
   const handleAddCustomActivity = () => {
     const trimmed = customKeyword.trim();
     if (!trimmed) return;
 
     const keywordMap = [
-      { keywords: ['요가', '필라테스', '스트레칭'], code: 'STRETCH', name: '스트레칭' },
-      { keywords: ['샤워', '목욕', '반신욕', '족욕'], code: 'BATH', name: '반신욕' },
-      { keywords: ['걷기', '산책'], code: 'WALK', name: '산책' },
-      { keywords: ['러닝', '조깅', '달리기'], code: 'JOGGING', name: '가벼운 조깅' },
+      { keywords: ['걷기', '산책'], code: 'WALK', name: '걷기' },
+      { keywords: ['스트레칭', '필라테스'], code: 'STRETCH', name: '스트레칭' },
+      { keywords: ['낮잠', '쪽잠', '잠'], code: 'NAP', name: '낮잠' },
+      { keywords: ['요가'], code: 'YOGA', name: '요가' },
       { keywords: ['명상', '호흡', '휴식'], code: 'MEDITATION', name: '명상' },
-      { keywords: ['책', '독서'], code: 'READING', name: '독서' },
-      { keywords: ['음악', '노래'], code: 'MUSIC', name: '음악 듣기' },
-      { keywords: ['일기', '기록', '글쓰기'], code: 'JOURNALING', name: '일기 쓰기' },
+      { keywords: ['러닝', '조깅', '달리기'], code: 'LIGHT_RUN', name: '가벼운 러닝' },
     ];
 
     const matched = keywordMap.find((entry) =>
@@ -87,7 +87,7 @@ const [sleepStartMinutes, setSleepStartMinutes] = useState(1410);
       setCustomKeyword('');
       setShowCustomInput(false);
     } else {
-      Alert.alert(
+      showAlert(
         '활동 선택 안내',
         '맞춤 추천 정확도를 위해 목록에 있는 추천 회복 활동 중에서 선택해 주세요.'
       );
@@ -96,7 +96,7 @@ const [sleepStartMinutes, setSleepStartMinutes] = useState(1410);
 
   const handleSubmit = async () => {
     if (selectedCodes.length === 0) {
-      Alert.alert('선호 회복 활동', '최소 1개 이상의 회복 활동을 선택해 주세요.');
+      showAlert('선호 회복 활동', '최소 1개 이상의 회복 활동을 선택해 주세요.');
       return;
     }
     if (submitting) return;
@@ -119,7 +119,7 @@ const [sleepStartMinutes, setSleepStartMinutes] = useState(1410);
 
       onSaved(res?.onboardingStep || 'SCHEDULE_REPORT');
     } catch (err) {
-      Alert.alert('저장 오류', err.message);
+      showAlert('저장 오류', err.message);
     } finally {
       setSubmitting(false);
     }

@@ -7,11 +7,18 @@ import {
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
   Modal,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
+
+// 승인 응답이 202(status: APPROVING)면 아직 구글 등록을 확인하는 중이다 (API 명세 5절).
+// 여러 건을 한 번에 승인하므로 하나라도 확인 중이면 "넣는 중" 으로 알린다.
+const approvedMessage = (results) =>
+  results.some((r) => r?.status === 'APPROVING')
+    ? '과부하 대비 회복 일정을 캘린더에 넣는 중이에요.'
+    : '과부하 대비 회복 일정을 캘린더에 추가했어요.';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const RISK_META = {
@@ -81,7 +88,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
       setReport(reportRes);
       setSuggestions(suggRes?.suggestions || []);
     } catch (err) {
-      Alert.alert('리포트 조회 오류', err.message);
+      showAlert('리포트 조회 오류', err.message);
     } finally {
       setLoading(false);
     }
@@ -98,13 +105,14 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
       setAlternativeSlots(res?.slots || []);
       setSlotModalVisible(true);
     } catch (err) {
-      Alert.alert('시간 조회 실패', err.message);
+      showAlert('시간 조회 실패', err.message);
     }
   };
 
   const approveListSequentially = async (targetList) => {
     if (targetList.length === 0) return;
     setActionLoading(true);
+    const results = [];
     try {
       for (const item of targetList) {
         try {
@@ -112,6 +120,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
             method: 'POST',
             idempotencyKey: generateUuid(),
           });
+          results.push(updated);
           setSuggestions((prev) =>
             prev.map((s) => (s.id === item.id ? updated : s))
           );
@@ -124,9 +133,9 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
           throw err;
         }
       }
-      Alert.alert('캘린더 추가 완료', '과부하 대비 회복 일정을 캘린더에 추가했어요.');
+      showAlert('캘린더 추가', approvedMessage(results));
     } catch (err) {
-      Alert.alert('일정 추가 실패', err.message);
+      showAlert('일정 추가 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -164,11 +173,11 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
       if (remaining.length > 0) {
         await approveListSequentially(remaining);
       } else {
-        Alert.alert('캘린더 추가 완료', '과부하 대비 회복 일정을 캘린더에 추가했어요.');
+        showAlert('캘린더 추가', approvedMessage([updated]));
       }
     } catch (err) {
       setActionLoading(false);
-      Alert.alert('시간 변경 승인 실패', err.message);
+      showAlert('시간 변경 승인 실패', err.message);
     }
   };
 
@@ -185,7 +194,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
       );
       setSuggestions([]);
     } catch (err) {
-      Alert.alert('처리 실패', err.message);
+      showAlert('처리 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -200,7 +209,7 @@ export default function ScheduleReportScreen({ onBack, onCompleteOnboarding }) {
       });
       onCompleteOnboarding(res);
     } catch (err) {
-      Alert.alert('완료 처리 실패', err.message);
+      showAlert('완료 처리 실패', err.message);
     } finally {
       setActionLoading(false);
     }

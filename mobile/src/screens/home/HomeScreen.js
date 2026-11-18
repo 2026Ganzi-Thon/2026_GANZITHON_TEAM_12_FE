@@ -7,10 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
   Modal,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const DAY_LABELS = ['월', '화', '수', '목', '금', '토', '일'];
@@ -79,7 +79,7 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
       });
       setDailyHours(hoursPerDay);
     } catch (err) {
-      Alert.alert('홈 불러오기 실패', err.message);
+      showAlert('홈 불러오기 실패', err.message);
     } finally {
       setLoading(false);
     }
@@ -105,7 +105,7 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
         setAlternativeSlots(res?.slots || []);
         setSlotModalVisible(true);
       } else {
-        Alert.alert('일정 추가 실패', err.message);
+        showAlert('일정 추가 실패', err.message);
       }
     } finally {
       setActionLoading(false);
@@ -125,7 +125,7 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
       setConflictSuggestion(null);
       await loadHome();
     } catch (err) {
-      Alert.alert('시간 변경 실패', err.message);
+      showAlert('시간 변경 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -140,7 +140,7 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
       });
       await loadHome();
     } catch (err) {
-      Alert.alert('건너뛰기 실패', err.message);
+      showAlert('건너뛰기 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -262,7 +262,8 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
           <Text style={styles.cardLabel}>이번 주 일정 부하 ⓘ</Text>
           {!isBuilding && homeData?.thisWeekLoad?.vsUsualPct != null && (
             <Text style={styles.loadSubSummary}>
-              평소보다 일정이 {Math.round(homeData.thisWeekLoad.vsUsualPct)}% 많아요
+              평소보다 일정이 {Math.abs(Math.round(homeData.thisWeekLoad.vsUsualPct))}%{' '}
+              {homeData.thisWeekLoad.vsUsualPct < 0 ? '적어요' : '많아요'}
             </Text>
           )}
 
@@ -299,7 +300,8 @@ export default function HomeScreen({ onNavigateTab, onOpenSafety }) {
 
           {isBuilding && homeData?.thisWeekLoad?.vsUsualPct != null && (
             <Text style={styles.cardFootnote}>
-              평소보다 일정이 {Math.round(homeData.thisWeekLoad.vsUsualPct)}% 많아요
+              평소보다 일정이 {Math.abs(Math.round(homeData.thisWeekLoad.vsUsualPct))}%{' '}
+              {homeData.thisWeekLoad.vsUsualPct < 0 ? '적어요' : '많아요'}
             </Text>
           )}
         </View>

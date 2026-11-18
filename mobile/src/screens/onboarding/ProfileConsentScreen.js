@@ -8,11 +8,11 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest, AuthUrls, refreshCsrfToken } from '../../api/client';
 
 const CONSENT_ITEMS = [
@@ -122,7 +122,7 @@ export default function ProfileConsentScreen({ userEmail, initialNickname, onCom
         });
         setFieldErrors(errMap);
       } else {
-        Alert.alert('저장 실패', err.message);
+        showAlert('저장 실패', err.message);
       }
     } finally {
       setSubmitting(false);

@@ -7,10 +7,10 @@ import {
   ScrollView,
   StyleSheet,
   SafeAreaView,
-  Alert,
   ActivityIndicator,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest } from '../../api/client';
 
 const WORK_STUDY_CATEGORIES = [
@@ -51,7 +51,7 @@ export default function CategoryEditScreen({ event, onBack, onSaved }) {
     const trimmedCustom = customCategory.trim();
 
     if (category === 'OTHER' && trimmedCustom.length > 20) {
-      Alert.alert('입력 오류', '직접 입력 카테고리는 20자 이내로 입력해 주세요.');
+      showAlert('입력 오류', '직접 입력 카테고리는 20자 이내로 입력해 주세요.');
       return;
     }
 
@@ -71,7 +71,7 @@ export default function CategoryEditScreen({ event, onBack, onSaved }) {
 
       onSaved(res);
     } catch (err) {
-      Alert.alert('저장 실패', err.message);
+      showAlert('저장 실패', err.message);
     } finally {
       setSubmitting(false);
     }

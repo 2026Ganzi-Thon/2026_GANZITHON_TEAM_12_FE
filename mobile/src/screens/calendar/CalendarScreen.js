@@ -7,10 +7,10 @@ import {
   StyleSheet,
   SafeAreaView,
   ActivityIndicator,
-  Alert,
   Modal,
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { apiRequest, generateUuid, ApiError } from '../../api/client';
 
 const CATEGORY_LABELS = {
@@ -113,9 +113,9 @@ export default function CalendarScreen({ onEditCategory, refreshTrigger }) {
       setSuggestions(suggRes?.suggestions || []);
     } catch (err) {
       if (err instanceof ApiError && err.code === 'ONBOARDING_STEP_INVALID') {
-        Alert.alert('동의 필요', '캘린더 이용 동의를 먼저 완료해 주세요.');
+        showAlert('동의 필요', '캘린더 이용 동의를 먼저 완료해 주세요.');
       } else {
-        Alert.alert('캘린더 조회 오류', err.message);
+        showAlert('캘린더 조회 오류', err.message);
       }
     } finally {
       setLoading(false);
@@ -150,7 +150,7 @@ export default function CalendarScreen({ onEditCategory, refreshTrigger }) {
         setAlternativeSlots(res?.slots || []);
         setSlotModalVisible(true);
       } else {
-        Alert.alert('일정 추가 실패', err.message);
+        showAlert('일정 추가 실패', err.message);
       }
     } finally {
       setActionLoading(false);
@@ -170,7 +170,7 @@ export default function CalendarScreen({ onEditCategory, refreshTrigger }) {
       setConflictSuggestion(null);
       await loadCalendarData();
     } catch (err) {
-      Alert.alert('시간 변경 실패', err.message);
+      showAlert('시간 변경 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -185,7 +185,7 @@ export default function CalendarScreen({ onEditCategory, refreshTrigger }) {
       });
       await loadCalendarData();
     } catch (err) {
-      Alert.alert('처리 실패', err.message);
+      showAlert('처리 실패', err.message);
     } finally {
       setActionLoading(false);
     }
@@ -360,7 +360,9 @@ export default function CalendarScreen({ onEditCategory, refreshTrigger }) {
                   <Text style={styles.eventMeta}>
                     {ev.categorySource === 'USER'
                       ? '직접 수정됨'
-                      : 'AI 분류 · 직접 수정 가능'}
+                      : ev.categorySource === 'AI'
+                        ? 'AI 분류 · 직접 수정 가능'
+                        : '자동 분류 · 직접 수정 가능'}
                   </Text>
                   <View
                     style={[

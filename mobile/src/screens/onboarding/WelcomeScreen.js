@@ -6,10 +6,10 @@ import {
   StyleSheet,
   SafeAreaView,
   Platform,
-  Alert,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { Colors, Fonts } from '../../theme/tokens';
+import { showAlert } from '../../utils/dialog';
 import { AuthUrls, refreshCsrfToken } from '../../api/client';
 
 export default function WelcomeScreen({ onAuthSuccess, authError, onDevSkip }) {
@@ -30,7 +30,7 @@ export default function WelcomeScreen({ onAuthSuccess, authError, onDevSkip }) {
         await onAuthSuccess();
       }
     } catch (e) {
-      Alert.alert('로그인 오류', 'Google 로그인을 시작할 수 없습니다. 다시 시도해 주세요.');
+      showAlert('로그인 오류', 'Google 로그인을 시작할 수 없습니다. 다시 시도해 주세요.');
     }
   };
 
