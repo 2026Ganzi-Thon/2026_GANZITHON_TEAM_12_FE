@@ -11,6 +11,8 @@ import {
 } from 'react-native';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, ApiError, generateUuid } from '../../api/client';
+import TermPopup from '../../components/TermPopup';
+import { findTerm } from '../../data/glossary';
 
 /**
  * B6 오늘의 측정 결과 (API 명세 6절 TodayResult).
@@ -21,26 +23,6 @@ const RECOVERY_LABEL = { LOW: '낮음', NORMAL: '평소 범위', INSUFFICIENT: '
 const QUALITY_LABEL = { GOOD: '좋음', FAIR: '보통', RETRY: '재측정 필요', UNVERIFIED: '참고용' };
 // 추천 이유. 1~7일차에는 회복을 판단할 수 없어 일정만 근거다 ("수정 요청사항 2" 1-8).
 const REASON_LABEL = { OVERLOAD: '일정 많음', LOW_RECOVERY: '일정 많음 + 회복 낮음' };
-
-// 용어 사전은 API가 없는 정적 데이터다 (API 명세 8절). 원본 용어 설명을 그대로 쓴다.
-const TERMS = {
-  recovery: {
-    title: '회복 점수 = 심박변이도(HRV), RMSSD',
-    description: '심장이 뛰는 간격이 얼마나 유연하게 변하는지를 나타내요. 몸이 잘 회복된 상태일수록 간격이 유연하게 변해요. Come & Down은 HRV 지표 중 RMSSD(연속된 심장 박동 간격 차이의 제곱 평균의 제곱근)를 써요.',
-  },
-  quality: {
-    title: '측정 품질 (좋음/보통/다시 측정) = 신호 품질 지수 (유효 박동 비율, 잡음비)',
-    description: "측정 중 맥박이 얼마나 깨끗하게 잡혔는지 나타내요. '다시 측정'인 날은 회복 점수 계산에 쓰지 않아요.",
-  },
-  heartRate: {
-    title: '심박수 = 안정 시 심박수 (bpm)',
-    description: '1분 동안 심장이 뛴 횟수예요. 회복 점수와 함께 참고용으로 보여드려요.',
-  },
-  excluded: {
-    title: '오늘은 계산에서 빠졌어요 = 교란 요인으로 인한 측정 제외',
-    description: "음주, 아픔, 측정 직전 카페인은 회복 점수를 일시적으로 바꿀 수 있어서, 해당하는 날은 '내 평소' 계산에서 빼요.",
-  },
-};
 
 const round1 = (value) => (value == null ? null : Math.round(value * 10) / 10);
 // 날짜만 있는 값은 기기 시간대에 따라 전날로 바뀌지 않도록 날짜 구성요소로 만든다.
@@ -72,7 +54,7 @@ function InfoButton({ term, onOpen }) {
       style={styles.infoButton}
       onPress={() => onOpen(term)}
       accessibilityRole="button"
-      accessibilityLabel={`${TERMS[term].title} 설명 보기`}
+      accessibilityLabel={`${findTerm(term)?.easy ?? ''} 설명 보기`}
     >
       <Text style={styles.infoIcon}>ⓘ</Text>
     </TouchableOpacity>
@@ -201,7 +183,7 @@ function SuggestionCard({ suggestion, building }) {
   );
 }
 
-export default function ResultScreen({ result, onHome }) {
+export default function ResultScreen({ result, onHome, onOpenGlossary }) {
   const [data, setData] = useState(result ?? null);
   const [loading, setLoading] = useState(result == null);
   const [error, setError] = useState(null);
@@ -236,7 +218,6 @@ export default function ResultScreen({ result, onHome }) {
   const validDays = current?.baseline?.validDays ?? 0;
   const required = current?.baseline?.required ?? 7;
   const pct = current?.recovery?.changePct;
-  const selectedTerm = TERMS[term];
 
   const labelWithInfo = (label, key) => (
     <View style={styles.labelRow}>
@@ -341,20 +322,8 @@ export default function ResultScreen({ result, onHome }) {
         </ScrollView>
       )}
       {/* 웹 용어 팝업을 네이티브 모달로 대체해 뒤로 가기와 닫기를 지원한다. */}
-      <Modal visible={Boolean(selectedTerm)} transparent animationType="fade" onRequestClose={() => setTerm(null)}>
-        <View style={styles.modalRoot}>
-          <TouchableOpacity style={styles.backdrop} activeOpacity={1} onPress={() => setTerm(null)} accessibilityRole="button" accessibilityLabel="용어 설명 닫기" />
-          <View style={styles.modalCard} accessibilityViewIsModal>
-            <ScrollView contentContainerStyle={styles.modalBody}>
-              <Text style={styles.modalTitle}>{selectedTerm?.title}</Text>
-              <Text style={styles.interpretationText}>{selectedTerm?.description}</Text>
-              <TouchableOpacity style={styles.button} onPress={() => setTerm(null)} accessibilityRole="button">
-                <Text style={styles.buttonText}>닫기</Text>
-              </TouchableOpacity>
-            </ScrollView>
-          </View>
-        </View>
-      </Modal>
+      {/* 용어 팝업은 용어 사전과 같은 데이터를 쓴다 (src/components/TermPopup) */}
+      <TermPopup termKey={term} onClose={() => setTerm(null)} onOpenGlossary={onOpenGlossary} />
     </SafeAreaView>
   );
 }
@@ -418,9 +387,4 @@ const styles = StyleSheet.create({
   slotButtonText: { fontFamily: Fonts.body, fontSize: 13, fontWeight: '600', color: Colors.textPrimary },
   homeButton: { marginTop: 8 },
   homeButtonText: { fontFamily: Fonts.body, fontSize: 16, fontWeight: '600', color: Colors.textPrimary },
-  modalRoot: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-  backdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: Colors.textPrimary, opacity: 0.45 },
-  modalCard: { width: '100%', maxWidth: 480, maxHeight: '85%', backgroundColor: Colors.surface, borderRadius: 16 },
-  modalBody: { padding: 24, gap: 18 },
-  modalTitle: { fontFamily: Fonts.display, fontSize: 19, fontWeight: '700', lineHeight: 28, color: Colors.textPrimary },
 });
