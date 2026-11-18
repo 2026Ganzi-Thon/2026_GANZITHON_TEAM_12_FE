@@ -127,7 +127,8 @@ export default function HrvMeasurementScreen({
 
     return () => {
       sessionActiveRef.current = false;
-      engine.abort();
+      // 엔진이 내보내는 이름은 stop 이다(abort 는 없다). 측정 중이 아니면 stop 은 바로 빠져나온다.
+      engine.stop();
     };
   }, [handleEngineResult, handleEngineError]);
 
