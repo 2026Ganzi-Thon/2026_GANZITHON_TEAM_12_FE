@@ -364,6 +364,13 @@ function handleMockRequest(path, method, body) {
         hrvVsUsualPct: -6.0,
         recoveryStatus: 'LOW',
         latestQuality: 'GOOD',
+        // 명세 7절: dayIndex 28 이상 + 7일 추세 20개 이상일 때만 공개된다.
+        rangePosition: {
+          available: true,
+          availableFrom: null,
+          recovery: { position: 35, low: 33.2, high: 55.0 },
+          load: { position: 62, low: 28.0, high: 74.0 },
+        },
         loadVsUsualPct: 18.0,
         interpretation: { text: '이번 주 일정이 평소보다 많고 회복이 낮은 편이에요.', aiGenerated: true, fallback: false },
       };
