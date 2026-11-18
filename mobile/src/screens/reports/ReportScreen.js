@@ -8,14 +8,15 @@ import {
   SafeAreaView,
   ActivityIndicator,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import RecoveryGraph from './RecoveryGraph';
 import { Colors, Fonts } from '../../theme/tokens';
 import { apiRequest, ApiError } from '../../api/client';
 
 /**
  * C1 회복 리포트 (API 명세 7절)
  * 잠금 해제 전에도 일정 쪽 카드는 보여준다.
- * C1-2 그래프는 시안 수정 대기("수정 요청사항 2" 1-9 날짜축 공유).
- * 그 전까지 잠금이 풀리면 요약만 보여준다.
+ * C1-2는 명세 7절과 수정 요청사항 2의 1-9에 맞춰 HRV와 일정 부하의 날짜축을 공유한다.
  */
 
 // 공통 토큰에 없는 잠김 카드와 위험 단계 색은 원본 시안의 구분을 유지한다.
@@ -66,14 +67,17 @@ export default function ReportScreen({ onOpenTerm } = {}) {
     (async () => {
       try {
         const [recovery, schedule, me] = await Promise.all([
-          apiRequest('/api/reports/recovery?days=14'),
+          apiRequest('/api/reports/recovery?days=28'),
           // 주차 조회·내 정보 실패는 회복 리포트 전체를 막지 않는다.
           apiRequest(`/api/schedule/weeks?from=${mondayOf()}&count=4`).catch(() => null),
           apiRequest('/api/me').catch(() => null),
         ]);
         if (alive) {
+          if (!recovery || typeof recovery.locked !== 'boolean') {
+            throw new Error('리포트 응답이 비어 있어요.');
+          }
           setReport(recovery);
-          setWeeks(schedule?.weeks ?? []);
+          setWeeks(Array.isArray(schedule?.weeks) ? schedule.weeks.filter(Boolean) : []);
           setCalendarConnected(me ? Boolean(me.calendar?.connected) : null);
         }
       } catch (e) {
@@ -102,7 +106,7 @@ export default function ReportScreen({ onOpenTerm } = {}) {
       accessibilityRole="button"
       accessibilityLabel={`${label} 설명 보기`}
     >
-      <Text style={styles.infoText}>ⓘ</Text>
+      <Ionicons name="information-circle-outline" size={18} color={Colors.textSecondary} />
     </TouchableOpacity>
   ) : null;
 
@@ -137,7 +141,7 @@ export default function ReportScreen({ onOpenTerm } = {}) {
                 ))}
               </View>
               <Text style={styles.note}>{requiredDays}일째부터 회복 리포트를 볼 수 있어요.</Text>
-              <Text style={styles.note}>매일 아침 재면 '내 평소'가 만들어져요.</Text>
+              <Text style={styles.note}>매일 아침 재면 ‘내 평소’가 만들어져요.</Text>
             </View>
           ) : (
             <View style={styles.card}>
@@ -151,6 +155,8 @@ export default function ReportScreen({ onOpenTerm } = {}) {
               ) : null}
             </View>
           )}
+
+          {report?.locked === false && <RecoveryGraph graph={report.graph} />}
 
           <View style={styles.card}>
             <View style={styles.cardHead}>
@@ -209,7 +215,6 @@ const styles = StyleSheet.create({
   cardHead: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
   cardTitle: { fontFamily: Fonts.body, fontSize: 16, fontWeight: '700', color: Colors.textPrimary, flexShrink: 1 },
   infoButton: { minWidth: 32, minHeight: 32, alignItems: 'center', justifyContent: 'center' },
-  infoText: { fontFamily: Fonts.body, fontSize: 16, color: Colors.textSecondary },
   lockedCard: { gap: 16, backgroundColor: REPORT_COLORS.lockedBackground, borderColor: REPORT_COLORS.lockedBorder },
   lockedTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   dots: { flexDirection: 'row', gap: 8 },
