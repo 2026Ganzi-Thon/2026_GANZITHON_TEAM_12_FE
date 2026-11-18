@@ -41,13 +41,6 @@ export default function MainTabNavigator({
 
   return (
     <View style={styles.root}>
-      {__DEV__ && onBackToOnboarding && (
-        <View style={styles.devTopBar}>
-          <TouchableOpacity onPress={onBackToOnboarding}>
-            <Text style={styles.devTopBarText}>← [DEV] 온보딩(A1~A5)으로 돌아가기</Text>
-          </TouchableOpacity>
-        </View>
-      )}
 
       <View style={styles.screenArea}>
         {activeTab === 'home' && (
@@ -128,16 +121,6 @@ export default function MainTabNavigator({
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: Colors.background },
-  devTopBar: {
-    backgroundColor: '#1E2522',
-    paddingVertical: 6,
-    paddingHorizontal: 14,
-  },
-  devTopBarText: {
-    fontSize: 11,
-    color: '#D0D7D4',
-    fontWeight: '600',
-  },
   screenArea: { flex: 1 },
   tabBarSafe: {
     backgroundColor: Colors.surface,
