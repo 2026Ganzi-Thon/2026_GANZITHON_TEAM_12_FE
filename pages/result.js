@@ -7,6 +7,7 @@
  */
 import { mountShell } from './shell.js';
 import { api, ApiError } from './api.js';
+import { infoButton } from './term-popup.js';
 
 const RECOVERY_LABEL = { LOW: '낮음', NORMAL: '평소 범위', INSUFFICIENT: '측정 부족', BUILDING: '기준선 만드는 중' };
 const QUALITY_LABEL = { GOOD: '좋음', FAIR: '보통', RETRY: '재측정 필요', UNVERIFIED: '참고용' };
@@ -104,7 +105,7 @@ function recoveryCard(r) {
   const card = el('section', 'rs-card rs-recovery');
   const top = el('div', 'rs-card__top');
   const label = el('div', 'rs-card__label');
-  label.append(el('span', null, '오늘의 회복'), icon('info-sm.svg', 11));
+  label.append(el('span', null, '오늘의 회복'), infoButton('recovery'));
   top.append(label, el('span', 'rs-chip rs-chip--solid', RECOVERY_LABEL[r.recovery?.status] ?? '—'));
 
   const pct = r.recovery?.changePct;
@@ -128,7 +129,7 @@ function qualityCard(r, building) {
     wrap.append(metric('HRV', round1(r.rmssdMs), 'ms'), metric('심박수', round1(r.heartRateBpm), 'bpm'));
     const q = el('section', 'rs-card rs-quality');
     const label = el('div', 'rs-card__label');
-    label.append(el('span', null, '측정 품질'), icon('info-sm.svg', 11));
+    label.append(el('span', null, '측정 품질'), infoButton('quality'));
     q.append(label, el('span', 'rs-chip', QUALITY_LABEL[r.qualityLevel] ?? '—'));
     const box = document.createDocumentFragment();
     box.append(wrap, q);
@@ -136,7 +137,7 @@ function qualityCard(r, building) {
   }
   const card = el('section', 'rs-card rs-quality-line');
   const label = el('div', 'rs-card__label');
-  label.append(el('span', null, '측정 품질'), icon('info-sm.svg', 11));
+  label.append(el('span', null, '측정 품질'), infoButton('quality'));
   const row = el('div', 'rs-quality-line__row');
   row.append(el('span', 'rs-chip rs-chip--dot', QUALITY_LABEL[r.qualityLevel] ?? '—'));
   if (r.rmssdMs != null) row.append(el('span', 'rs-sep', '·'), el('span', null, `HRV ${round1(r.rmssdMs)}ms`));
@@ -148,7 +149,7 @@ function qualityCard(r, building) {
 function metric(name, value, unit) {
   const card = el('div', 'rs-card rs-metric');
   const label = el('div', 'rs-card__label');
-  label.append(el('span', null, name), icon('info-sm.svg', 11));
+  label.append(el('span', null, name), infoButton(name === 'HRV' ? 'recovery' : 'heartRate'));
   const v = el('p', 'rs-metric__value');
   v.append(el('b', null, value == null ? '—' : String(value)), el('span', null, unit));
   card.append(label, v);
@@ -172,7 +173,7 @@ function interpretationCard(interpretation) {
 
 function excludedNote() {
   const note = el('p', 'rs-excluded');
-  note.append(icon('info-sm.svg', 12), el('span', null, "오늘 값은 '내 평소' 계산에서 빠져요"));
+  note.append(infoButton('excluded'), el('span', null, "오늘 값은 '내 평소' 계산에서 빠져요"));
   return note;
 }
 

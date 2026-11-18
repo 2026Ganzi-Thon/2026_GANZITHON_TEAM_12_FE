@@ -6,6 +6,7 @@
  */
 import { mountShell } from './shell.js';
 import { api, ApiError } from './api.js';
+import { infoButton } from './term-popup.js';
 
 const RISK = {
   RISK:  { label: '위험', bar: '#D98D74', dot: '#D98D74' },
@@ -20,11 +21,7 @@ const el = (tag, cls, text) => {
   if (text != null) n.textContent = text;
   return n;
 };
-const info = () => {
-  const n = document.createElement('img');
-  n.src = '../assets/icons/info-md.svg'; n.width = 13; n.height = 13; n.alt = '';
-  return n;
-};
+const info = (key) => infoButton(key);
 const round1 = (n) => (n == null ? null : Math.round(n * 10) / 10);
 const signed = (n) => `${n > 0 ? '+' : ''}${round1(n)}%`;
 
@@ -95,7 +92,7 @@ function lockedCard({ requiredDays = 7, validDays = 0 }) {
 function summaryCard(report) {
   const card = el('section', 'rp-card rp-value');
   const head = el('div', 'rp-card__head');
-  head.append(el('h2', null, '평소 대비 회복'), info());
+  head.append(el('h2', null, '평소 대비 회복'), info('changePct'));
   const pct = report.hrvVsUsualPct;
   card.append(head, el('p', 'rp-value__num', pct == null ? '—' : signed(pct)));
   if (report.interpretation?.text) card.append(el('p', 'rp-value__note', report.interpretation.text));
@@ -105,7 +102,7 @@ function summaryCard(report) {
 function loadCard(pct) {
   const card = el('section', 'rp-card rp-value');
   const head = el('div', 'rp-card__head');
-  head.append(el('h2', null, '평소 대비 일정 부하'), info());
+  head.append(el('h2', null, '평소 대비 일정 부하'), info('loadVsUsual'));
   card.append(head, el('p', 'rp-value__num is-load', pct == null ? '—' : signed(pct)));
   if (pct == null) card.append(el('p', 'rp-value__note', '캘린더를 연결하면 알려드려요'));
   return card;
@@ -114,7 +111,7 @@ function loadCard(pct) {
 function riskCard(weeks) {
   const card = el('section', 'rp-card rp-risk');
   const head = el('div', 'rp-card__head');
-  head.append(el('h2', null, '앞으로 4주 위험 주차'), info());
+  head.append(el('h2', null, '앞으로 4주 위험 주차'), info('riskWeek'));
   card.append(head);
 
   const chart = el('div', 'rp-risk__chart');
